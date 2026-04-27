@@ -1,13 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Wordmark } from "@/components/Wordmark";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { fmtMonth, fmtNum, fmtMoney, fmtPct, delta } from "@/lib/format";
+import { fmtMonth, fmtNum, fmtMoney, fmtPct, fmtDate, delta } from "@/lib/format";
 import { ArrowLeft, Save, Sparkles, Printer, CheckCircle2, FileDown, ArrowUp, ArrowDown, Minus } from "lucide-react";
 import { toast } from "sonner";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 interface SectionRow { id: string; kind: string; position: number; title: string; body: string; data: any; }
 interface MetricsRow { impressions: number; clicks: number; ctr: number; cpc: number; cost: number; conversions: number; conversion_rate: number; cpa: number; conversion_value: number; roas: number; prior: any; top_campaigns: any[]; top_keywords: any[]; top_products: any[]; }
