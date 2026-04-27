@@ -152,28 +152,30 @@ export default function ReportView() {
               </Button>
             )}
             <Button size="sm" variant="outline" onClick={() => window.print()}>
-              <Printer className="size-4 mr-1.5" /> Print / PDF
+              <Printer className="size-4 mr-1.5" /> Print
             </Button>
-            <Button size="sm" onClick={() => { setStatus("exported"); setTimeout(() => window.print(), 250); }}>
-              <FileDown className="size-4 mr-1.5" /> Export PDF
+            <Button size="sm" disabled={exporting} onClick={exportPdf}>
+              <FileDown className="size-4 mr-1.5" /> {exporting ? "Exporting…" : "Export PDF"}
             </Button>
           </div>
         </div>
       </div>
 
       {/* REPORT BODY */}
-      <div className="mx-auto" style={{ maxWidth: 1060, padding: "60px" }}>
+      <div ref={reportRef} className="mx-auto" style={{ maxWidth: 1060, padding: "60px" }}>
         {/* HEADER */}
         <header className="relative mb-12 pb-10 border-b border-border print-page">
           <div className="absolute top-0 right-0 w-[520px] h-[260px] lynck-glow pointer-events-none" />
           <div className="flex items-start justify-between mb-12 relative">
             <Wordmark size="md" />
             <div className="text-right text-sm">
-              <p className="lynck-muted">{client?.name}</p>
-              <p className="lynck-muted">{fmtMonth(report.period_month)}</p>
+              <p className="lynck-section-label mb-1">Generated</p>
+              <p className="lynck-muted">{fmtDate(new Date())}</p>
             </div>
           </div>
-          <p className="lynck-section-label mb-4 relative">Monthly Performance Report</p>
+          <p className="lynck-section-label mb-4 relative">
+            {client?.name} — {fmtMonth(report.period_month)}
+          </p>
           <h1 className="lynck-hero-title text-5xl md:text-6xl mb-5 relative max-w-3xl">
             {report.headline?.split(" ").slice(0, -2).join(" ") || "Your monthly"}{" "}
             <em className="not-italic text-primary">{report.headline?.split(" ").slice(-2).join(" ") || "recap"}.</em>
