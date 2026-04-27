@@ -24,6 +24,46 @@ export default function ReportView() {
   const [recs, setRecs] = useState<RecRow[]>([]);
   const [editing, setEditing] = useState<Record<string, string>>({});
   const [regenerating, setRegenerating] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const reportRef = useRef<HTMLDivElement>(null);
+
+  const exportPdf = async () => {
+    if (!reportRef.current) return;
+    setExporting(true);
+    try {
+      const canvas = await html2canvas(reportRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#080808",
+        logging: false,
+      });
+      const imgWidth = 210; // A4 mm
+      const pageHeight = 297;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const pdf = new jsPDF("p", "mm", "a4");
+      const imgData = canvas.toDataURL("image/png");
+      let heightLeft = imgHeight;
+      let position = 0;
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+      const safe = (s: string) => s.replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+      const fname = `lynck-${safe(client?.name || "client")}-${safe(fmtMonth(report.period_month))}.pdf`;
+      pdf.save(fname);
+      await supabase.from("reports").update({ status: "exported", exported_at: new Date().toISOString() }).eq("id", id);
+      load();
+      toast.success("PDF downloaded");
+    } catch (e: any) {
+      toast.error("Export failed: " + (e?.message || "unknown"));
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const load = async () => {
     if (!id) return;
