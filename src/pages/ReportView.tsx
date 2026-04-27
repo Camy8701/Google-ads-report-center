@@ -1,13 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Wordmark } from "@/components/Wordmark";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { fmtMonth, fmtNum, fmtMoney, fmtPct, delta } from "@/lib/format";
+import { fmtMonth, fmtNum, fmtMoney, fmtPct, fmtDate, delta } from "@/lib/format";
 import { ArrowLeft, Save, Sparkles, Printer, CheckCircle2, FileDown, ArrowUp, ArrowDown, Minus } from "lucide-react";
 import { toast } from "sonner";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 interface SectionRow { id: string; kind: string; position: number; title: string; body: string; data: any; }
 interface MetricsRow { impressions: number; clicks: number; ctr: number; cpc: number; cost: number; conversions: number; conversion_rate: number; cpa: number; conversion_value: number; roas: number; prior: any; top_campaigns: any[]; top_keywords: any[]; top_products: any[]; }
@@ -22,6 +24,46 @@ export default function ReportView() {
   const [recs, setRecs] = useState<RecRow[]>([]);
   const [editing, setEditing] = useState<Record<string, string>>({});
   const [regenerating, setRegenerating] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const reportRef = useRef<HTMLDivElement>(null);
+
+  const exportPdf = async () => {
+    if (!reportRef.current) return;
+    setExporting(true);
+    try {
+      const canvas = await html2canvas(reportRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#080808",
+        logging: false,
+      });
+      const imgWidth = 210; // A4 mm
+      const pageHeight = 297;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const pdf = new jsPDF("p", "mm", "a4");
+      const imgData = canvas.toDataURL("image/png");
+      let heightLeft = imgHeight;
+      let position = 0;
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+      const safe = (s: string) => s.replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+      const fname = `lynck-${safe(client?.name || "client")}-${safe(fmtMonth(report.period_month))}.pdf`;
+      pdf.save(fname);
+      await supabase.from("reports").update({ status: "exported", exported_at: new Date().toISOString() }).eq("id", id);
+      load();
+      toast.success("PDF downloaded");
+    } catch (e: any) {
+      toast.error("Export failed: " + (e?.message || "unknown"));
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const load = async () => {
     if (!id) return;
@@ -110,28 +152,30 @@ export default function ReportView() {
               </Button>
             )}
             <Button size="sm" variant="outline" onClick={() => window.print()}>
-              <Printer className="size-4 mr-1.5" /> Print / PDF
+              <Printer className="size-4 mr-1.5" /> Print
             </Button>
-            <Button size="sm" onClick={() => { setStatus("exported"); setTimeout(() => window.print(), 250); }}>
-              <FileDown className="size-4 mr-1.5" /> Export PDF
+            <Button size="sm" disabled={exporting} onClick={exportPdf}>
+              <FileDown className="size-4 mr-1.5" /> {exporting ? "Exporting…" : "Export PDF"}
             </Button>
           </div>
         </div>
       </div>
 
       {/* REPORT BODY */}
-      <div className="mx-auto" style={{ maxWidth: 1060, padding: "60px" }}>
+      <div ref={reportRef} className="mx-auto" style={{ maxWidth: 1060, padding: "60px" }}>
         {/* HEADER */}
         <header className="relative mb-12 pb-10 border-b border-border print-page">
           <div className="absolute top-0 right-0 w-[520px] h-[260px] lynck-glow pointer-events-none" />
           <div className="flex items-start justify-between mb-12 relative">
             <Wordmark size="md" />
             <div className="text-right text-sm">
-              <p className="lynck-muted">{client?.name}</p>
-              <p className="lynck-muted">{fmtMonth(report.period_month)}</p>
+              <p className="lynck-section-label mb-1">Generated</p>
+              <p className="lynck-muted">{fmtDate(new Date())}</p>
             </div>
           </div>
-          <p className="lynck-section-label mb-4 relative">Monthly Performance Report</p>
+          <p className="lynck-section-label mb-4 relative">
+            {client?.name} — {fmtMonth(report.period_month)}
+          </p>
           <h1 className="lynck-hero-title text-5xl md:text-6xl mb-5 relative max-w-3xl">
             {report.headline?.split(" ").slice(0, -2).join(" ") || "Your monthly"}{" "}
             <em className="not-italic text-primary">{report.headline?.split(" ").slice(-2).join(" ") || "recap"}.</em>
