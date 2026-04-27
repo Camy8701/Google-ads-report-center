@@ -2,7 +2,7 @@ export const fmtNum = (n: number | null | undefined, digits = 0) => {
   if (n == null || isNaN(Number(n))) return "—";
   return Number(n).toLocaleString(undefined, { maximumFractionDigits: digits, minimumFractionDigits: digits });
 };
-export const fmtMoney = (n: number | null | undefined, currency = "USD") => {
+export const fmtMoney = (n: number | null | undefined, currency = "EUR") => {
   if (n == null || isNaN(Number(n))) return "—";
   return Number(n).toLocaleString(undefined, { style: "currency", currency, maximumFractionDigits: 0 });
 };
