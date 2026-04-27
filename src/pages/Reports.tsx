@@ -50,7 +50,7 @@ export default function Reports() {
     const title = `${client.name} — ${new Date(period).toLocaleDateString(undefined, { month: "long", year: "numeric" })}`;
     const { data: r, error } = await supabase.from("reports").insert([{
       client_id: form.client_id, title, period_month: period, status: "draft",
-      headline: mock.headline, overall_status: mock.overall_status,
+      headline: mock.headline, overall_status: mock.overall_status as "good" | "medium" | "urgent" | "info",
     }]).select().single();
     if (error || !r) { setCreating(false); return toast.error(error?.message || "Failed"); }
     await supabase.from("report_metrics").insert([{ report_id: r.id, ...mock.metrics }]);
