@@ -174,34 +174,33 @@ export default function ReportView() {
             </div>
           </div>
           <p className="lynck-section-label mb-4 relative">
-            {client?.name} — {fmtMonth(report.period_month)}
+            Monthly performance report
           </p>
-          <h1 className="lynck-hero-title text-5xl md:text-6xl mb-5 relative max-w-3xl">
-            {report.headline?.split(" ").slice(0, -2).join(" ") || "Your monthly"}{" "}
-            <em className="not-italic text-primary">{report.headline?.split(" ").slice(-2).join(" ") || "recap"}.</em>
+          <h1 className="lynck-hero-title text-5xl md:text-6xl mb-6 relative max-w-3xl">
+            {client?.name}
+            <em className="not-italic text-primary"> — {fmtMonth(report.period_month)}.</em>
           </h1>
-          <p className="text-card-body lynck-muted max-w-2xl relative">
-            I have prepared this report to walk you through last month's performance and the opportunities I see for the month ahead.
-          </p>
+          {summary?.body && (
+            <p className="text-card-body lynck-muted max-w-2xl relative whitespace-pre-wrap leading-relaxed">
+              {summary.body}
+            </p>
+          )}
         </header>
 
-        {/* EXECUTIVE SUMMARY */}
-        <Section
-          kind="executive_summary" section={summary} editing={editing} setEditing={setEditing}
-          onSave={saveSection} onRegenerate={regenerate} regenerating={regenerating}
-          extra={
-            takeaways.length > 0 && (
-              <div className="grid sm:grid-cols-3 gap-3 mt-6">
-                {takeaways.map((t, i) => (
-                  <div key={i} className="lynck-card p-4">
-                    <p className="text-[11px] uppercase tracking-[0.15em] text-primary mb-1.5">Takeaway {i + 1}</p>
-                    <p className="text-card-body">{t}</p>
-                  </div>
-                ))}
-              </div>
-            )
-          }
-        />
+        {/* EXECUTIVE TAKEAWAYS */}
+        {takeaways.length > 0 && (
+          <section className="mb-14 print-page">
+            <p className="lynck-section-label mb-3">The month at a glance</p>
+            <div className="grid sm:grid-cols-3 gap-3">
+              {takeaways.map((t, i) => (
+                <div key={i} className="lynck-card p-4">
+                  <p className="text-[11px] uppercase tracking-[0.15em] text-primary mb-1.5">Takeaway {i + 1}</p>
+                  <p className="text-card-body">{t}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* CORE METRICS */}
         <SectionWrap label="Core performance" title="The numbers" emphasize="this month">
