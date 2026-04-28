@@ -59,7 +59,7 @@ export default function Dashboard() {
   return (
     <PageContainer>
       <PageHeader
-        eyebrow="Today"
+        eyebrow="TODAY"
         title="Reporting"
         emphasize="command center"
         description="All active clients, current reporting status, and next moves."
