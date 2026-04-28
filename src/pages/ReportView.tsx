@@ -187,23 +187,20 @@ export default function ReportView() {
           )}
         </header>
 
-        {/* EXECUTIVE SUMMARY */}
-        <Section
-          kind="executive_summary" section={summary} editing={editing} setEditing={setEditing}
-          onSave={saveSection} onRegenerate={regenerate} regenerating={regenerating}
-          extra={
-            takeaways.length > 0 && (
-              <div className="grid sm:grid-cols-3 gap-3 mt-6">
-                {takeaways.map((t, i) => (
-                  <div key={i} className="lynck-card p-4">
-                    <p className="text-[11px] uppercase tracking-[0.15em] text-primary mb-1.5">Takeaway {i + 1}</p>
-                    <p className="text-card-body">{t}</p>
-                  </div>
-                ))}
-              </div>
-            )
-          }
-        />
+        {/* EXECUTIVE TAKEAWAYS */}
+        {takeaways.length > 0 && (
+          <section className="mb-14 print-page">
+            <p className="lynck-section-label mb-3">The month at a glance</p>
+            <div className="grid sm:grid-cols-3 gap-3">
+              {takeaways.map((t, i) => (
+                <div key={i} className="lynck-card p-4">
+                  <p className="text-[11px] uppercase tracking-[0.15em] text-primary mb-1.5">Takeaway {i + 1}</p>
+                  <p className="text-card-body">{t}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* CORE METRICS */}
         <SectionWrap label="Core performance" title="The numbers" emphasize="this month">
