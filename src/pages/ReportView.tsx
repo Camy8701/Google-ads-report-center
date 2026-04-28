@@ -37,6 +37,12 @@ export default function ReportView() {
       const marginMm = 10;
       const contentWidthMm = pageWidthMm - marginMm * 2;
       const contentHeightMm = pageHeightMm - marginMm * 2;
+      const bg = "#080808";
+
+      const paintPageBg = () => {
+        pdf.setFillColor(8, 8, 8);
+        pdf.rect(0, 0, pageWidthMm, pageHeightMm, "F");
+      };
 
       // Collect block-level chunks. Each `.print-page` element becomes one chunk.
       const blocks = Array.from(
@@ -44,6 +50,7 @@ export default function ReportView() {
       );
       if (blocks.length === 0) blocks.push(reportRef.current);
 
+      paintPageBg();
       let cursorY = marginMm;
       let isFirstPage = true;
 
@@ -51,7 +58,7 @@ export default function ReportView() {
         const canvas = await html2canvas(block, {
           scale: 2,
           useCORS: true,
-          backgroundColor: "#080808",
+          backgroundColor: bg,
           logging: false,
         });
         const imgData = canvas.toDataURL("image/png");
@@ -60,6 +67,7 @@ export default function ReportView() {
         // If block fits on current page, place it. Otherwise start a new page.
         if (!isFirstPage && cursorY + blockHeightMm > pageHeightMm - marginMm) {
           pdf.addPage();
+          paintPageBg();
           cursorY = marginMm;
         }
         isFirstPage = false;
@@ -77,6 +85,7 @@ export default function ReportView() {
           while (renderedPx < canvas.height) {
             if (!firstSlice) {
               pdf.addPage();
+              paintPageBg();
               cursorY = marginMm;
             }
             const remainingPx = canvas.height - renderedPx;
@@ -86,7 +95,7 @@ export default function ReportView() {
             sliceCanvas.width = canvas.width;
             sliceCanvas.height = thisSlicePx;
             const ctx = sliceCanvas.getContext("2d")!;
-            ctx.fillStyle = "#080808";
+            ctx.fillStyle = bg;
             ctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
             ctx.drawImage(canvas, 0, -renderedPx);
             const sliceData = sliceCanvas.toDataURL("image/png");
