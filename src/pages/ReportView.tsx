@@ -31,27 +31,74 @@ export default function ReportView() {
     if (!reportRef.current) return;
     setExporting(true);
     try {
-      const canvas = await html2canvas(reportRef.current, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: "#080808",
-        logging: false,
-      });
-      const imgWidth = 210; // A4 mm
-      const pageHeight = 297;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
       const pdf = new jsPDF("p", "mm", "a4");
-      const imgData = canvas.toDataURL("image/png");
-      let heightLeft = imgHeight;
-      let position = 0;
-      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+      const pageWidthMm = 210;
+      const pageHeightMm = 297;
+      const marginMm = 10;
+      const contentWidthMm = pageWidthMm - marginMm * 2;
+      const contentHeightMm = pageHeightMm - marginMm * 2;
+
+      // Collect block-level chunks. Each `.print-page` element becomes one chunk.
+      const blocks = Array.from(
+        reportRef.current.querySelectorAll<HTMLElement>(".print-page")
+      );
+      if (blocks.length === 0) blocks.push(reportRef.current);
+
+      let cursorY = marginMm;
+      let isFirstPage = true;
+
+      for (const block of blocks) {
+        const canvas = await html2canvas(block, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: "#080808",
+          logging: false,
+        });
+        const imgData = canvas.toDataURL("image/png");
+        const blockHeightMm = (canvas.height * contentWidthMm) / canvas.width;
+
+        // If block fits on current page, place it. Otherwise start a new page.
+        if (!isFirstPage && cursorY + blockHeightMm > pageHeightMm - marginMm) {
+          pdf.addPage();
+          cursorY = marginMm;
+        }
+        isFirstPage = false;
+
+        // If a single block is taller than a page, slice it across pages.
+        if (blockHeightMm <= contentHeightMm) {
+          pdf.addImage(imgData, "PNG", marginMm, cursorY, contentWidthMm, blockHeightMm);
+          cursorY += blockHeightMm + 6; // small gutter between blocks
+        } else {
+          // Slice the tall block into page-sized chunks.
+          const pxPerMm = canvas.width / contentWidthMm;
+          const sliceHeightPx = Math.floor(contentHeightMm * pxPerMm);
+          let renderedPx = 0;
+          let firstSlice = true;
+          while (renderedPx < canvas.height) {
+            if (!firstSlice) {
+              pdf.addPage();
+              cursorY = marginMm;
+            }
+            const remainingPx = canvas.height - renderedPx;
+            const thisSlicePx = Math.min(sliceHeightPx, remainingPx);
+
+            const sliceCanvas = document.createElement("canvas");
+            sliceCanvas.width = canvas.width;
+            sliceCanvas.height = thisSlicePx;
+            const ctx = sliceCanvas.getContext("2d")!;
+            ctx.fillStyle = "#080808";
+            ctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
+            ctx.drawImage(canvas, 0, -renderedPx);
+            const sliceData = sliceCanvas.toDataURL("image/png");
+            const sliceHeightMm = (thisSlicePx * contentWidthMm) / canvas.width;
+            pdf.addImage(sliceData, "PNG", marginMm, cursorY, contentWidthMm, sliceHeightMm);
+            cursorY += sliceHeightMm + 6;
+            renderedPx += thisSlicePx;
+            firstSlice = false;
+          }
+        }
       }
+
       const safe = (s: string) => s.replace(/[^a-z0-9]+/gi, "-").toLowerCase();
       const fname = `lynck-${safe(client?.name || "client")}-${safe(fmtMonth(report.period_month))}.pdf`;
       pdf.save(fname);
