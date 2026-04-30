@@ -1,5 +1,4 @@
-/* LYNCK Studio — Brand Design System */
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&family=Syne:wght@500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@500;600;700&family=Syne:wght@500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -7,137 +6,426 @@
 
 @layer base {
   :root {
-    /* Dark theme only — values in HSL */
-    --background: 0 0% 3.1%;          /* #080808 */
-    --foreground: 43 21% 95%;         /* #F5F3EE */
+    --background: 45 7% 6%;
+    --foreground: 35 27% 94%;
 
-    --card: 0 0% 9%;                  /* #171717 */
-    --card-foreground: 43 21% 95%;
+    --card: 40 8% 12%;
+    --card-foreground: 35 27% 94%;
 
-    --popover: 0 0% 9%;
-    --popover-foreground: 43 21% 95%;
+    --popover: 40 8% 12%;
+    --popover-foreground: 35 27% 94%;
 
-    --primary: 20 100% 55%;           /* #FF6B1A brand accent */
-    --primary-foreground: 0 0% 6%;
+    --primary: 31 85% 52%;
+    --primary-foreground: 35 27% 94%;
 
-    --secondary: 0 0% 14.5%;          /* #252525 surfaces */
-    --secondary-foreground: 43 21% 95%;
+    --secondary: 40 9% 16%;
+    --secondary-foreground: 35 27% 94%;
 
-    --muted: 0 0% 14.5%;
-    --muted-foreground: 50 5% 47%;    /* #7A7870 */
+    --muted: 40 9% 16%;
+    --muted-foreground: 36 10% 63%;
 
-    --accent: 20 100% 55%;
-    --accent-foreground: 0 0% 6%;
+    --accent: 31 85% 52%;
+    --accent-foreground: 35 27% 94%;
 
-    --destructive: 9 89% 62%;         /* #F5634A */
-    --destructive-foreground: 43 21% 95%;
+    --destructive: 14 54% 54%;
+    --destructive-foreground: 35 27% 94%;
 
-    --border: 0 0% 14.5%;             /* #252525 */
-    --input: 0 0% 14.5%;
-    --ring: 20 100% 55%;
+    --border: 40 9% 20%;
+    --input: 40 9% 18%;
+    --ring: 31 85% 52%;
 
-    --radius: 12px;
+    --radius: 24px;
 
-    /* Status palette */
-    --status-good: 154 60% 53%;       /* #3ECF8E */
-    --status-medium: 47 89% 62%;      /* #F5C842 */
-    --status-urgent: 9 89% 62%;       /* #F5634A */
-    --status-info: 50 5% 47%;
-    --status-summary: 20 100% 55%;
+    --status-good: 101 18% 60%;
+    --status-medium: 41 50% 61%;
+    --status-urgent: 14 54% 54%;
+    --status-info: 36 10% 63%;
+    --status-summary: 31 85% 52%;
 
-    /* Sidebar */
-    --sidebar-background: 0 0% 5%;
-    --sidebar-foreground: 43 21% 95%;
-    --sidebar-primary: 20 100% 55%;
-    --sidebar-primary-foreground: 0 0% 6%;
-    --sidebar-accent: 0 0% 9%;
-    --sidebar-accent-foreground: 43 21% 95%;
-    --sidebar-border: 0 0% 14.5%;
-    --sidebar-ring: 20 100% 55%;
+    --sidebar-background: 45 7% 6%;
+    --sidebar-foreground: 35 27% 94%;
+    --sidebar-primary: 31 85% 52%;
+    --sidebar-primary-foreground: 35 27% 94%;
+    --sidebar-accent: 40 9% 16%;
+    --sidebar-accent-foreground: 35 27% 94%;
+    --sidebar-border: 40 9% 20%;
+    --sidebar-ring: 31 85% 52%;
 
-    /* Brand glow */
-    --brand-glow: radial-gradient(circle at top right, hsla(20, 100%, 55%, 0.16) 0%, transparent 70%);
+    --brand-glow:
+      radial-gradient(circle at top right, rgba(236, 138, 29, 0.18) 0%, transparent 42%),
+      radial-gradient(circle at top left, rgba(138, 154, 123, 0.12) 0%, transparent 36%);
   }
 
-  .dark { /* same — app is dark only */
-    --background: 0 0% 3.1%;
-    --foreground: 43 21% 95%;
-    --card: 0 0% 9%;
-    --card-foreground: 43 21% 95%;
-    --popover: 0 0% 9%;
-    --popover-foreground: 43 21% 95%;
-    --primary: 20 100% 55%;
-    --primary-foreground: 0 0% 6%;
-    --secondary: 0 0% 14.5%;
-    --secondary-foreground: 43 21% 95%;
-    --muted: 0 0% 14.5%;
-    --muted-foreground: 50 5% 47%;
-    --accent: 20 100% 55%;
-    --accent-foreground: 0 0% 6%;
-    --destructive: 9 89% 62%;
-    --destructive-foreground: 43 21% 95%;
-    --border: 0 0% 14.5%;
-    --input: 0 0% 14.5%;
-    --ring: 20 100% 55%;
+  .dark {
+    --background: 45 7% 6%;
+    --foreground: 35 27% 94%;
+    --card: 40 8% 12%;
+    --card-foreground: 35 27% 94%;
+    --popover: 40 8% 12%;
+    --popover-foreground: 35 27% 94%;
+    --primary: 31 85% 52%;
+    --primary-foreground: 35 27% 94%;
+    --secondary: 40 9% 16%;
+    --secondary-foreground: 35 27% 94%;
+    --muted: 40 9% 16%;
+    --muted-foreground: 36 10% 63%;
+    --accent: 31 85% 52%;
+    --accent-foreground: 35 27% 94%;
+    --destructive: 14 54% 54%;
+    --destructive-foreground: 35 27% 94%;
+    --border: 40 9% 20%;
+    --input: 40 9% 18%;
+    --ring: 31 85% 52%;
   }
 }
 
 @layer base {
-  * { @apply border-border; }
-  html, body, #root { @apply bg-background text-foreground; min-height: 100vh; }
+  * {
+    @apply border-border;
+  }
+
+  html, body, #root {
+    @apply bg-background text-foreground;
+    min-height: 100vh;
+  }
+
   body {
-    font-family: 'DM Sans', system-ui, sans-serif;
+    font-family: 'Inter', sans-serif;
     font-weight: 400;
     font-size: 16px;
     -webkit-font-smoothing: antialiased;
     color: hsl(var(--foreground));
-    background: hsl(var(--background));
+    background-color: hsl(var(--background));
+    background-image:
+      radial-gradient(circle at top left, rgba(236, 138, 29, 0.16) 0%, transparent 28%),
+      radial-gradient(circle at top right, rgba(138, 154, 123, 0.12) 0%, transparent 34%),
+      linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: auto, auto, 56px 56px, 56px 56px;
   }
+
   h1, h2, h3, h4, h5, h6, .font-display {
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    letter-spacing: -0.01em;
+    font-family: 'Playfair Display', serif;
+    font-weight: 600;
+    letter-spacing: -0.025em;
   }
 }
 
 @layer components {
   .lynck-card {
-    @apply rounded-[12px] border border-border bg-card;
+    @apply border border-border bg-card;
+    border-radius: 24px;
+    box-shadow:
+      0 24px 48px rgba(0, 0, 0, 0.22),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
   }
+
   .lynck-section-label {
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.15em;
+    font-weight: 600;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
     color: hsl(var(--primary));
   }
-  .lynck-muted { color: hsl(var(--muted-foreground)); }
-  .lynck-divider { @apply border-t border-border; }
-  .lynck-hero-title {
-    font-family: 'Syne', sans-serif;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    line-height: 1.05;
+
+  .lynck-muted {
+    color: hsl(var(--muted-foreground));
   }
+
+  .lynck-divider {
+    @apply border-t border-border;
+  }
+
+  .lynck-hero-title {
+    font-family: 'Playfair Display', serif;
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    line-height: 0.98;
+  }
+
   .lynck-glow {
     background: var(--brand-glow);
   }
+
   .lynck-wordmark {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+  }
+
+  .lynck-wordmark-dot {
+    color: hsl(var(--accent));
+  }
+
+  .lynck-card .text-card-body {
+    font-size: 15px;
+  }
+
+  .crm-topbar {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(18, 17, 15, 0.76);
+    backdrop-filter: blur(18px);
+    border-radius: 999px;
+    box-shadow: 0 22px 48px rgba(0, 0, 0, 0.18);
+  }
+
+  .crm-nav-link {
+    border-radius: 999px;
+    color: hsl(var(--muted-foreground));
+    transition:
+      color 180ms ease,
+      background-color 180ms ease,
+      box-shadow 180ms ease,
+      transform 180ms ease;
+  }
+
+  .crm-nav-link:hover {
+    color: hsl(var(--foreground));
+    background: rgba(255, 255, 255, 0.04);
+    transform: translateY(-1px);
+  }
+
+  .crm-nav-link.active {
+    color: hsl(var(--foreground));
+    background: linear-gradient(135deg, rgba(236, 138, 29, 0.18), rgba(138, 154, 123, 0.12));
+    box-shadow: inset 0 0 0 1px rgba(236, 138, 29, 0.22);
+  }
+
+  .crm-shell-aura {
+    background:
+      radial-gradient(circle at top right, rgba(236, 138, 29, 0.08) 0%, transparent 28%),
+      radial-gradient(circle at 15% 10%, rgba(138, 154, 123, 0.07) 0%, transparent 24%);
+  }
+
+  .crm-page-fade {
+    animation: crmPageFade 520ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .crm-eyebrow-pill {
+    border: 1px solid rgba(236, 138, 29, 0.22);
+    background: rgba(236, 138, 29, 0.1);
+    color: hsl(var(--primary));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+
+  .crm-hero-panel {
+    position: relative;
+    overflow: hidden;
+    border-radius: 32px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: linear-gradient(135deg, rgba(33, 30, 27, 0.96) 0%, rgba(17, 16, 15, 0.96) 100%);
+    box-shadow:
+      0 28px 64px rgba(0, 0, 0, 0.26),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+
+  .crm-hero-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at 12% 18%, rgba(236, 138, 29, 0.14) 0%, transparent 28%),
+      radial-gradient(circle at 88% 16%, rgba(138, 154, 123, 0.12) 0%, transparent 28%);
+    pointer-events: none;
+  }
+
+  .crm-hero-scene {
+    position: relative;
+    overflow: hidden;
+    min-height: 100svh;
+    background:
+      linear-gradient(90deg, rgba(11, 11, 10, 0.82) 0%, rgba(11, 11, 10, 0.42) 50%, rgba(11, 11, 10, 0.78) 100%),
+      linear-gradient(180deg, rgba(11, 11, 10, 0.1) 0%, rgba(11, 11, 10, 0.7) 100%),
+      url("https://images.unsplash.com/photo-1511818966892-d7d671e672a2?auto=format&fit=crop&w=1800&q=80") center/cover no-repeat;
+  }
+
+  .crm-hero-scene::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at 72% 28%, rgba(236, 138, 29, 0.12) 0%, transparent 22%),
+      radial-gradient(circle at 22% 16%, rgba(138, 154, 123, 0.12) 0%, transparent 26%);
+  }
+
+  .crm-hero-scene::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 42%;
+    background: linear-gradient(to top, rgba(11, 11, 10, 0.88) 0%, transparent 100%);
+  }
+
+  .crm-hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 760px;
+  }
+
+  .crm-hero-statbar {
+    position: relative;
+    z-index: 2;
+    border-top: 1px solid rgba(236, 138, 29, 0.12);
+    background: linear-gradient(180deg, rgba(11, 11, 10, 0.04) 0%, rgba(11, 11, 10, 0.28) 100%);
+    backdrop-filter: blur(8px);
+  }
+
+  .crm-hero-media {
+    position: relative;
+    min-height: 320px;
+    overflow: hidden;
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background:
+      linear-gradient(180deg, rgba(15, 15, 14, 0.24) 0%, rgba(15, 15, 14, 0.72) 100%),
+      url("https://images.unsplash.com/photo-1558655146-9f40138edfeb?auto=format&fit=crop&w=1200&q=80") center/cover no-repeat;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  }
+
+  .crm-hero-media::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(15, 15, 14, 0.1) 0%, rgba(15, 15, 14, 0.58) 68%, rgba(15, 15, 14, 0.84) 100%);
+  }
+
+  .crm-hero-chip {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(10px);
+  }
+
+  .crm-table-row:hover {
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .report-theme {
+    --background: 210 13% 10%;
+    --foreground: 43 21% 95%;
+    --card: 214 13% 15%;
+    --card-foreground: 43 21% 95%;
+    --popover: 214 13% 15%;
+    --popover-foreground: 43 21% 95%;
+    --primary: 31 85% 52%;
+    --primary-foreground: 0 0% 6%;
+    --secondary: 214 14% 18%;
+    --secondary-foreground: 43 21% 95%;
+    --muted: 214 14% 18%;
+    --muted-foreground: 42 9% 63%;
+    --accent: 31 85% 52%;
+    --accent-foreground: 0 0% 6%;
+    --destructive: 9 89% 62%;
+    --destructive-foreground: 43 21% 95%;
+    --border: 214 13% 24%;
+    --input: 214 13% 24%;
+    --ring: 31 85% 52%;
+    --radius: 12px;
+    --status-good: 154 60% 53%;
+    --status-medium: 47 89% 62%;
+    --status-urgent: 9 89% 62%;
+    --status-info: 50 5% 47%;
+    --status-summary: 31 85% 52%;
+    --brand-glow:
+      radial-gradient(circle at top right, rgba(236, 138, 29, 0.15) 0%, transparent 72%),
+      radial-gradient(circle at top left, rgba(143, 169, 199, 0.08) 0%, transparent 48%);
+    min-height: 100vh;
+    color: hsl(var(--foreground));
+    background: hsl(var(--background));
+  }
+
+  .report-theme,
+  .report-theme p,
+  .report-theme button,
+  .report-theme input,
+  .report-theme textarea,
+  .report-theme select {
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .report-theme .lynck-card {
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(30, 35, 42, 0.96) 0%, rgba(24, 29, 35, 0.96) 100%);
+    box-shadow:
+      0 18px 36px rgba(5, 8, 11, 0.18),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+
+  .report-theme .lynck-section-label {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    color: hsl(var(--primary));
+  }
+
+  .report-theme .lynck-hero-title,
+  .report-theme .font-display,
+  .report-theme .lynck-wordmark {
     font-family: 'Syne', sans-serif;
     font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  .report-theme .lynck-wordmark {
     letter-spacing: 0.02em;
   }
-  .lynck-wordmark-dot { color: hsl(var(--primary)); }
-  /* In-card text size override per brand spec */
-  .lynck-card .text-card-body { font-size: 14.5px; }
+
+  .report-theme .lynck-wordmark-dot {
+    color: hsl(var(--primary));
+  }
+
+  .report-theme .lynck-card .text-card-body {
+    font-size: 14.5px;
+  }
+
+  .report-theme .report-hero-orb {
+    border-radius: 9999px;
+    background:
+      radial-gradient(circle, rgba(236, 138, 29, 0.28) 0%, rgba(236, 138, 29, 0.14) 34%, rgba(236, 138, 29, 0.06) 52%, transparent 74%);
+    filter: blur(28px);
+    opacity: 0.9;
+  }
+
+  .report-theme [data-exporting-pdf="true"] .pdf-export-hidden {
+    display: none !important;
+  }
 }
 
-/* Print styles for PDF export */
+@keyframes crmPageFade {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media print {
-  @page { size: A4; margin: 0; }
-  body { background: #080808 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .no-print { display: none !important; }
-  .print-page { page-break-after: always; padding: 32px 48px; }
-  .print-page:last-child { page-break-after: auto; }
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  body {
+    background: #121416 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-page {
+    page-break-after: always;
+    padding: 32px 48px;
+  }
+
+  .print-page:last-child {
+    page-break-after: auto;
+  }
 }

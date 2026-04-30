@@ -10,6 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { fmtDate, fmtMonthShort } from "@/lib/format";
 import { ArrowLeft, Save, FileText, Mail, Building2 } from "lucide-react";
 import { toast } from "sonner";
+import { getClientReportGoal, getReportGoalLabel, getVisibleBrandNotes, withReportGoalMeta, type ReportGoal } from "@/lib/reportGoal";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function ClientDetail() {
   const { id } = useParams();
@@ -29,14 +31,18 @@ export default function ClientDetail() {
       supabase.from("reports").select("*").eq("client_id", id).order("period_month", { ascending: false }),
     ]);
     setClient(c); setContacts(ct || []); setAccounts(ac || []); setReports(rp || []);
-    setForm(c || {});
+    setForm({
+      ...(c || {}),
+      brand_notes: getVisibleBrandNotes(c?.brand_notes),
+      report_goal: getClientReportGoal(c?.brand_notes, c?.business_type),
+    });
   };
   useEffect(() => { load(); }, [id]);
 
   const save = async () => {
     const { error } = await supabase.from("clients").update({
       name: form.name, business_type: form.business_type, industry: form.industry,
-      website: form.website, brand_notes: form.brand_notes, reporting_status: form.reporting_status,
+      website: form.website, brand_notes: withReportGoalMeta(form.brand_notes || "", form.report_goal as ReportGoal), reporting_status: form.reporting_status,
     }).eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Saved");
@@ -51,14 +57,26 @@ export default function ClientDetail() {
         <ArrowLeft className="size-4" /> Back to clients
       </Link>
       <PageHeader
-        eyebrow={client.business_type === "ecommerce" ? "Ecommerce" : "Lead gen"}
+        eyebrow={`${client.business_type === "ecommerce" ? "Ecommerce" : "Lead gen"} · ${getReportGoalLabel(getClientReportGoal(client.brand_notes, client.business_type))}`}
         title={client.name}
         description={client.industry || ""}
         actions={
           <div className="flex gap-2">
             {!editing && <Button variant="outline" onClick={() => setEditing(true)}>Edit</Button>}
             {editing && <>
-              <Button variant="ghost" onClick={() => { setEditing(false); setForm(client); }}>Cancel</Button>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setEditing(false);
+                  setForm({
+                    ...(client || {}),
+                    brand_notes: getVisibleBrandNotes(client?.brand_notes),
+                    report_goal: getClientReportGoal(client?.brand_notes, client?.business_type),
+                  });
+                }}
+              >
+                Cancel
+              </Button>
               <Button onClick={save}><Save className="size-4 mr-2" />Save</Button>
             </>}
           </div>
@@ -69,9 +87,29 @@ export default function ClientDetail() {
         <div className="lynck-card p-5 md:col-span-2">
           <p className="lynck-section-label mb-3">Brand notes</p>
           {editing ? (
-            <Textarea rows={6} value={form.brand_notes || ""} onChange={(e) => setForm({ ...form, brand_notes: e.target.value })} />
+            <div className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[11px] uppercase tracking-[0.15em] lynck-muted mb-1.5 block">Reporting goal</label>
+                  <Select value={form.report_goal} onValueChange={(v: ReportGoal) => setForm({ ...form, report_goal: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ecommerce">Ecommerce</SelectItem>
+                      <SelectItem value="lead_gen">Lead gen</SelectItem>
+                      <SelectItem value="growth">Growth</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <Textarea rows={6} value={form.brand_notes || ""} onChange={(e) => setForm({ ...form, brand_notes: e.target.value })} />
+            </div>
           ) : (
-            <p className="text-card-body whitespace-pre-wrap">{client.brand_notes || "No brand notes yet."}</p>
+            <div className="space-y-3">
+              <span className="inline-flex rounded-full border border-border px-3 py-1 text-[11px] uppercase tracking-[0.15em] text-primary">
+                Reporting goal · {getReportGoalLabel(getClientReportGoal(client.brand_notes, client.business_type))}
+              </span>
+              <p className="text-card-body whitespace-pre-wrap">{getVisibleBrandNotes(client.brand_notes) || "No brand notes yet."}</p>
+            </div>
           )}
         </div>
         <div className="lynck-card p-5 space-y-4">
@@ -139,7 +177,7 @@ export default function ClientDetail() {
               <tr><td colSpan={4} className="px-5 py-8 text-center lynck-muted">No reports yet.</td></tr>
             )}
             {reports.map((r) => (
-              <tr key={r.id} className="border-t border-border hover:bg-secondary/40">
+              <tr key={r.id} className="crm-table-row border-t border-border">
                 <td className="px-5 py-4">{fmtMonthShort(r.period_month)}</td>
                 <td className="px-5 py-4">{r.title}</td>
                 <td className="px-5 py-4"><StatusBadge variant="report" value={r.status} /></td>

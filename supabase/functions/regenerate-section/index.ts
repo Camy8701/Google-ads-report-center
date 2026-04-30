@@ -6,9 +6,9 @@ const corsHeaders = {
 };
 
 const SECTION_PROMPTS: Record<string, string> = {
-  executive_summary: "Write a tight 4-6 sentence executive summary recapping the month. Open with 'I have prepared'. Highlight the headline result, what drove it, and the one thing the client should know. First-person, constructive tone, no hype words.",
-  what_changed: "Write a 4-6 sentence narrative explaining the biggest month-over-month changes and the most likely reasons. Reference specific metrics. Frame causes (budget, seasonality, CTR/CPC, conversion, mix) clearly. First-person, constructive.",
-  opportunities: "Write a 3-5 sentence opportunities section. Frame problems as opportunities. Be specific and actionable, but not prescriptive — that's the decision page. First-person, solution-oriented.",
+  executive_summary: "Write a tight 3-4 sentence executive summary. Open with 'I have prepared'. Focus only on the primary performance outcome, the biggest driver, and the one thing the client should know. First-person, constructive, no filler.",
+  what_changed: "Write a concise 3-4 sentence explanation of what changed and why. Reference only the most material metrics. If the most likely cause is seasonality or external market pressure, say that plainly instead of forcing a deeper explanation.",
+  opportunities: "Write a compact 2-3 sentence optimization lens section. Focus on where attention should go next without sounding generic. First-person, solution-oriented.",
   decision_page: "Write a 1-2 sentence intro to the recommended actions. Confident and direct. First-person.",
   appendix: "Write a 1-2 sentence note describing what supporting detail is available on request.",
 };
@@ -24,7 +24,9 @@ serve(async (req) => {
     const isEcom = client?.business_type === "ecommerce";
     const m = metrics || {};
     const p = m.prior || {};
+    const reportGoal = client?.report_goal || (isEcom ? "ecommerce" : "lead_gen");
     const dataSummary = `Client: ${client?.name} (${isEcom ? "ecommerce" : "lead gen"}).
+Reporting goal: ${reportGoal}.
 Brand notes: ${client?.brand_notes || "n/a"}.
 Reporting month: ${period_month}.
 Metrics this month vs prior:
@@ -37,7 +39,8 @@ Metrics this month vs prior:
 - Conv. rate: ${m.conversion_rate}% (prior ${p.conversion_rate}%)
 - CPA: $${m.cpa} (prior $${p.cpa})
 ${isEcom ? `- Conv. value: $${m.conversion_value} (prior $${p.conversion_value})\n- ROAS: ${m.roas}x (prior ${p.roas}x)` : ""}
-Top campaigns: ${JSON.stringify(m.top_campaigns?.slice(0, 3) || [])}.`;
+Top campaigns: ${JSON.stringify(m.top_campaigns?.slice(0, 3) || [])}.
+Avoid generic wrap-up language. Prefer a direct explanation, even if the answer is simply seasonality, auction pressure, or campaign mix.`;
 
     const system = `You are a senior performance marketing strategist writing the monthly Google Ads report for LYNCK Studio.
 Voice: sharp, premium, first-person ("I"), constructive, never accusatory. Frame issues as opportunities.

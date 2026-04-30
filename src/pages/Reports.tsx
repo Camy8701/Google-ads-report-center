@@ -12,6 +12,7 @@ import { fmtMonthShort } from "@/lib/format";
 import { Plus, ArrowUpRight } from "lucide-react";
 import { toast } from "sonner";
 import { generateMockReport } from "@/lib/mockReport";
+import { getClientReportGoal } from "@/lib/reportGoal";
 
 export default function Reports() {
   const [reports, setReports] = useState<any[]>([]);
@@ -27,7 +28,7 @@ export default function Reports() {
     setLoading(true);
     const [{ data: rs }, { data: cs }] = await Promise.all([
       supabase.from("reports").select("*, clients(name, business_type)").order("period_month", { ascending: false }),
-      supabase.from("clients").select("id,name,business_type").eq("archived", false).order("name"),
+      supabase.from("clients").select("id,name,business_type,brand_notes").eq("archived", false).order("name"),
     ]);
     setReports(rs || []); setClients(cs || []); setLoading(false);
   };
@@ -46,7 +47,11 @@ export default function Reports() {
       window.location.href = `/reports/${exists.id}`;
       return;
     }
-    const mock = generateMockReport(client?.business_type || "ecommerce");
+    const mock = generateMockReport({
+      businessType: client?.business_type || "ecommerce",
+      reportGoal: getClientReportGoal(client?.brand_notes, client?.business_type),
+      periodMonth: period,
+    });
     const title = `${client.name} — ${new Date(period).toLocaleDateString(undefined, { month: "long", year: "numeric" })}`;
     const { data: r, error } = await supabase.from("reports").insert([{
       client_id: form.client_id, title, period_month: period, status: "draft",
@@ -113,7 +118,7 @@ export default function Reports() {
             {loading && <tr><td colSpan={5} className="px-5 py-10 text-center lynck-muted">Loading…</td></tr>}
             {!loading && reports.length === 0 && <tr><td colSpan={5} className="px-5 py-10 text-center lynck-muted">No reports yet.</td></tr>}
             {reports.map((r) => (
-              <tr key={r.id} className="border-t border-border hover:bg-secondary/40">
+              <tr key={r.id} className="crm-table-row border-t border-border">
                 <td className="px-5 py-4">
                   <Link to={`/clients/${r.client_id}`} className="hover:text-primary">{r.clients?.name}</Link>
                 </td>

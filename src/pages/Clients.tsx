@@ -11,12 +11,20 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, ArrowUpRight } from "lucide-react";
 import { toast } from "sonner";
+import { getClientReportGoal, getReportGoalLabel, getVisibleBrandNotes, withReportGoalMeta, type ReportGoal } from "@/lib/reportGoal";
 
 export default function Clients() {
   const [clients, setClients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ name: "", business_type: "ecommerce", industry: "", website: "", brand_notes: "" });
+  const [form, setForm] = useState<{ name: string; business_type: "ecommerce" | "lead_gen"; report_goal: ReportGoal; industry: string; website: string; brand_notes: string }>({
+    name: "",
+    business_type: "ecommerce",
+    report_goal: "ecommerce",
+    industry: "",
+    website: "",
+    brand_notes: "",
+  });
 
   const load = async () => {
     setLoading(true);
@@ -28,11 +36,18 @@ export default function Clients() {
 
   const create = async () => {
     if (!form.name.trim()) return toast.error("Client name is required");
-    const { error } = await supabase.from("clients").insert([form as any]);
+    const payload = {
+      name: form.name,
+      business_type: form.business_type,
+      industry: form.industry,
+      website: form.website,
+      brand_notes: withReportGoalMeta(form.brand_notes, form.report_goal),
+    };
+    const { error } = await supabase.from("clients").insert([payload as any]);
     if (error) return toast.error(error.message);
     toast.success("Client created");
     setOpen(false);
-    setForm({ name: "", business_type: "ecommerce", industry: "", website: "", brand_notes: "" });
+    setForm({ name: "", business_type: "ecommerce", report_goal: "ecommerce", industry: "", website: "", brand_notes: "" });
     load();
   };
 
@@ -55,11 +70,21 @@ export default function Clients() {
                   <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Acme Outdoor" />
                 </Field>
                 <Field label="Business type">
-                  <Select value={form.business_type} onValueChange={(v) => setForm({ ...form, business_type: v })}>
+                  <Select value={form.business_type} onValueChange={(v: "ecommerce" | "lead_gen") => setForm({ ...form, business_type: v, report_goal: form.report_goal === "growth" ? "growth" : v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="ecommerce">Ecommerce</SelectItem>
                       <SelectItem value="lead_gen">Lead gen</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field label="Reporting goal">
+                  <Select value={form.report_goal} onValueChange={(v: ReportGoal) => setForm({ ...form, report_goal: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ecommerce">Ecommerce</SelectItem>
+                      <SelectItem value="lead_gen">Lead gen</SelectItem>
+                      <SelectItem value="growth">Growth</SelectItem>
                     </SelectContent>
                   </Select>
                 </Field>
@@ -90,14 +115,19 @@ export default function Clients() {
           <Link to={`/clients/${c.id}`} key={c.id} className="lynck-card p-5 hover:border-primary/40 transition-colors group">
             <div className="flex items-start justify-between mb-3">
               <div>
-                <p className="text-[11px] uppercase tracking-[0.15em] lynck-muted mb-1">
-                  {c.business_type === "ecommerce" ? "Ecommerce" : "Lead gen"}
-                </p>
+                <div className="mb-1 flex flex-wrap items-center gap-2">
+                  <p className="text-[11px] uppercase tracking-[0.15em] lynck-muted">
+                    {c.business_type === "ecommerce" ? "Ecommerce" : "Lead gen"}
+                  </p>
+                  <span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-primary">
+                    {getReportGoalLabel(getClientReportGoal(c.brand_notes, c.business_type))}
+                  </span>
+                </div>
                 <h3 className="font-display text-xl font-bold group-hover:text-primary transition-colors">{c.name}</h3>
               </div>
               <ArrowUpRight className="size-4 lynck-muted group-hover:text-primary transition-colors" />
             </div>
-            <p className="text-card-body lynck-muted line-clamp-2 mb-4">{c.brand_notes || "No brand notes yet."}</p>
+            <p className="text-card-body lynck-muted line-clamp-2 mb-4">{getVisibleBrandNotes(c.brand_notes) || "No brand notes yet."}</p>
             <div className="flex items-center justify-between">
               <StatusBadge variant="reporting" value={c.reporting_status} />
               <span className="text-xs lynck-muted">{c.industry || "—"}</span>

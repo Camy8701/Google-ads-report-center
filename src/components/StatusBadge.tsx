@@ -30,7 +30,7 @@ export const StatusBadge = ({ value, variant = "urgency", className = "" }: { va
   const map: any = variant === "report" ? reportStatusMap : variant === "reporting" ? reportingStatusMap : urgencyMap;
   const cfg = map[value] ?? { color: "bg-muted text-muted-foreground border-border", label: value };
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[11px] font-medium tracking-wide uppercase ${cfg.color} ${className}`}>
+    <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-semibold tracking-[0.12em] uppercase ${cfg.color} ${className}`}>
       <span className="size-1.5 rounded-full bg-current" />
       {cfg.label}
     </span>

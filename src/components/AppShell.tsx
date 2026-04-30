@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, FileText, Settings as SettingsIcon } from "lucide-react";
+import { LayoutDashboard, Users, FileText, Settings as SettingsIcon, Sparkles } from "lucide-react";
 import { Wordmark } from "./Wordmark";
 
 const nav = [
@@ -16,38 +16,72 @@ export const AppShell = () => {
   if (isReportView) return <Outlet />;
 
   return (
-    <div className="min-h-screen flex bg-background">
-      <aside className="no-print w-60 shrink-0 border-r border-border bg-sidebar flex flex-col">
-        <div className="px-5 py-6 border-b border-border">
-          <Wordmark size="md" />
-          <p className="mt-1 text-[11px] tracking-[0.15em] uppercase lynck-muted">Internal CRM</p>
+    <div className="crm-shell-aura min-h-screen relative">
+      <div className="pointer-events-none fixed inset-0 -z-10">
+        <div className="absolute inset-0 lynck-glow opacity-90" />
+      </div>
+
+      <header className="no-print sticky top-0 z-40 px-4 pt-4">
+        <div className="mx-auto max-w-[1280px]">
+          <div className="crm-topbar px-4 py-3 md:px-5">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex items-center gap-3">
+                <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2 shadow-sm">
+                  <Wordmark size="sm" />
+                </div>
+                <div className="hidden md:block">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] lynck-muted">Internal operations</p>
+                  <p className="text-sm text-foreground">Google Ads reporting CRM</p>
+                </div>
+              </div>
+
+              <nav className="hidden md:flex items-center gap-2">
+                {nav.map((n) => (
+                  <NavLink
+                    key={n.to}
+                    to={n.to}
+                    end={n.end as any}
+                    className={({ isActive }) =>
+                      `crm-nav-link inline-flex items-center gap-2 px-4 py-2 text-[13px] font-semibold uppercase tracking-[0.08em] ${
+                        isActive ? "active" : ""
+                      }`
+                    }
+                  >
+                    <n.icon className="size-4" />
+                    {n.label}
+                  </NavLink>
+                ))}
+              </nav>
+
+              <div className="hidden lg:flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm shadow-sm">
+                <Sparkles className="size-4 text-primary" />
+                <span className="text-foreground">Mock data mode</span>
+              </div>
+            </div>
+          </div>
+
+          <nav className="mt-3 flex gap-2 overflow-x-auto pb-1 md:hidden">
+            {nav.map((n) => (
+              <NavLink
+                key={n.to}
+                to={n.to}
+                end={n.end as any}
+                className={({ isActive }) =>
+                  `crm-nav-link inline-flex shrink-0 items-center gap-2 px-4 py-2 text-[13px] font-semibold uppercase tracking-[0.08em] ${
+                    isActive ? "active" : "border border-white/10 bg-white/5"
+                  }`
+                }
+              >
+                <n.icon className="size-4" />
+                {n.label}
+              </NavLink>
+            ))}
+          </nav>
         </div>
-        <nav className="flex-1 p-3 space-y-1">
-          {nav.map((n) => (
-            <NavLink
-              key={n.to}
-              to={n.to}
-              end={n.end as any}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-md text-[14.5px] transition-colors ${
-                  isActive
-                    ? "bg-sidebar-accent text-foreground border border-border"
-                    : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/60"
-                }`
-              }
-            >
-              <n.icon className="size-4" />
-              {n.label}
-            </NavLink>
-          ))}
-        </nav>
-        <div className="p-4 border-t border-border text-[11px] tracking-[0.15em] uppercase lynck-muted">
-          v1 · Mock data
-        </div>
-      </aside>
-      <main className="flex-1 min-w-0 relative">
-        <div className="absolute inset-0 lynck-glow pointer-events-none" />
-        <div className="relative">
+      </header>
+
+      <main className="relative z-10">
+        <div key={loc.pathname} className="crm-page-fade">
           <Outlet />
         </div>
       </main>
