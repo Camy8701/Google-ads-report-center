@@ -65,15 +65,30 @@ export default function ReportView() {
   const reportRef = useRef<HTMLDivElement>(null);
 
   const syncFromGoogleAds = async () => {
-    if (!report?.ad_account_id) {
-      toast.error("This report has no ad account linked. Add a Google Ads customer ID on the client page first.");
-      return;
-    }
     setSyncing(true);
     try {
+      let adAccountId = report?.ad_account_id as string | undefined;
+      // Fall back to the client's first ad account with a customer ID
+      if (!adAccountId && report?.client_id) {
+        const { data: accts } = await supabase
+          .from("ad_accounts")
+          .select("id, google_ads_customer_id, created_at")
+          .eq("client_id", report.client_id)
+          .order("created_at", { ascending: true });
+        const firstWithId = (accts || []).find((a: any) => (a.google_ads_customer_id || "").trim());
+        if (firstWithId) {
+          adAccountId = firstWithId.id;
+          // Persist the link so future syncs/exports use it directly
+          await supabase.from("reports").update({ ad_account_id: adAccountId }).eq("id", report.id);
+        }
+      }
+      if (!adAccountId) {
+        toast.error("This report has no ad account linked. Add a Google Ads customer ID on the client page first.");
+        return;
+      }
       const { data, error } = await supabase.functions.invoke("sync-google-ads", {
         body: {
-          ad_account_id: report.ad_account_id,
+          ad_account_id: adAccountId,
           period_month: report.period_month,
           report_id: report.id,
         },
