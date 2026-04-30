@@ -145,16 +145,57 @@ export default function ClientDetail() {
           </ul>
         </div>
         <div className="lynck-card p-5">
-          <p className="lynck-section-label mb-3 inline-flex items-center gap-2"><Building2 className="size-3" /> Google Ads accounts</p>
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <p className="lynck-section-label inline-flex items-center gap-2"><Building2 className="size-3" /> Google Ads accounts</p>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={async () => {
+                const { error } = await supabase.from("ad_accounts").insert([{
+                  client_id: id, label: "Primary account", currency: "EUR", data_source_status: "mock",
+                }] as any);
+                if (error) return toast.error(error.message);
+                load();
+              }}
+            >
+              + Add
+            </Button>
+          </div>
           {accounts.length === 0 && <p className="text-card-body lynck-muted">No accounts linked.</p>}
-          <ul className="space-y-3">
+          <ul className="space-y-4">
             {accounts.map((a) => (
-              <li key={a.id} className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-card-body font-medium">{a.label}</p>
-                  <p className="text-xs lynck-muted">Customer ID · {a.google_ads_customer_id || "—"}</p>
+              <li key={a.id} className="space-y-2 border-b border-border pb-4 last:border-0 last:pb-0">
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-[10px] uppercase tracking-[0.15em] lynck-muted mb-1 block">Label</label>
+                    <Input
+                      defaultValue={a.label || ""}
+                      onBlur={async (e) => {
+                        if (e.target.value === (a.label || "")) return;
+                        await supabase.from("ad_accounts").update({ label: e.target.value }).eq("id", a.id);
+                        load();
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] uppercase tracking-[0.15em] lynck-muted mb-1 block">Google Ads customer ID</label>
+                    <Input
+                      placeholder="1234567890"
+                      defaultValue={a.google_ads_customer_id || ""}
+                      onBlur={async (e) => {
+                        const cleaned = e.target.value.replace(/\D/g, "");
+                        if (cleaned === (a.google_ads_customer_id || "")) return;
+                        await supabase.from("ad_accounts").update({ google_ads_customer_id: cleaned || null }).eq("id", a.id);
+                        toast.success("Customer ID saved");
+                        load();
+                      }}
+                    />
+                  </div>
                 </div>
-                <span className="text-[10px] uppercase tracking-[0.15em] lynck-muted">{a.data_source_status}</span>
+                <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.15em] lynck-muted">
+                  <span>Status · {a.data_source_status}</span>
+                  <span>{a.last_sync_at ? `Last sync · ${fmtDate(a.last_sync_at)}` : "Never synced"}</span>
+                </div>
               </li>
             ))}
           </ul>
