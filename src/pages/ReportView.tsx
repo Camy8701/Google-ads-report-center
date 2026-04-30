@@ -279,6 +279,9 @@ export default function ReportView() {
           </Link>
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge variant="report" value={report.status} />
+            <Button size="sm" variant="outline" disabled={syncing} onClick={syncFromGoogleAds}>
+              <RefreshCw className={`size-4 mr-1.5 ${syncing ? "animate-spin" : ""}`} /> {syncing ? "Syncing…" : "Sync from Google Ads"}
+            </Button>
             {report.status !== "approved" && report.status !== "exported" && (
               <Button size="sm" variant="outline" onClick={() => setStatus("in_review")}>Mark in review</Button>
             )}
