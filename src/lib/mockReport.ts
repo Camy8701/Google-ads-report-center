@@ -174,7 +174,6 @@ export function generateMockReport({ businessType, reportGoal, periodMonth }: Ge
           `Cost ${cost > prior.cost ? "rose" : "eased"} to ${Math.round(cost).toLocaleString()} (${Math.abs(((cost - prior.cost) / Math.max(prior.cost, 1)) * 100).toFixed(0)}% MoM)`,
           `${isEcom ? "Brand and Shopping" : isLeadGen ? "Core Search and Brand" : "Demand Capture and Non-brand"} carried most of the gain`,
         ],
-        timeline,
         conversionSplit,
         leadActions,
       },

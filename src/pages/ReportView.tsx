@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { fmtMonth, fmtNum, fmtMoney, fmtPct, fmtDate, delta } from "@/lib/format";
 import { getClientReportGoal, getReportGoalLabel, getVisibleBrandNotes, type ReportGoal } from "@/lib/reportGoal";
-import { ArrowLeft, Save, Sparkles, Printer, CheckCircle2, FileDown, ArrowUp, ArrowDown, Minus } from "lucide-react";
+import { ArrowLeft, Save, Sparkles, Printer, CheckCircle2, FileDown, ArrowUp, ArrowDown, Minus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -61,7 +61,33 @@ export default function ReportView() {
   const [editing, setEditing] = useState<Record<string, string>>({});
   const [regenerating, setRegenerating] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
+
+  const syncFromGoogleAds = async () => {
+    if (!report?.ad_account_id) {
+      toast.error("This report has no ad account linked. Add a Google Ads customer ID on the client page first.");
+      return;
+    }
+    setSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("sync-google-ads", {
+        body: {
+          ad_account_id: report.ad_account_id,
+          period_month: report.period_month,
+          report_id: report.id,
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast.success(`Synced from Google Ads (${(data as any)?.currency || "—"})`);
+      load();
+    } catch (e: any) {
+      toast.error("Sync failed: " + (e?.message || "unknown"));
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const exportPdf = async () => {
     if (!reportRef.current) return;
@@ -253,6 +279,9 @@ export default function ReportView() {
           </Link>
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge variant="report" value={report.status} />
+            <Button size="sm" variant="outline" disabled={syncing} onClick={syncFromGoogleAds}>
+              <RefreshCw className={`size-4 mr-1.5 ${syncing ? "animate-spin" : ""}`} /> {syncing ? "Syncing…" : "Sync from Google Ads"}
+            </Button>
             {report.status !== "approved" && report.status !== "exported" && (
               <Button size="sm" variant="outline" onClick={() => setStatus("in_review")}>Mark in review</Button>
             )}
