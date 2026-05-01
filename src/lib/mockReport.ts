@@ -1,4 +1,4 @@
-import type { ReportGoal } from "./reportGoal";
+import { getReportGoalFamily, type ReportGoal } from "./reportGoal";
 
 type BusinessType = "ecommerce" | "lead_gen" | string;
 
