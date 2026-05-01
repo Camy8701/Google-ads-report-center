@@ -106,9 +106,11 @@ export default function ClientDetail() {
                   <Select value={form.report_goal} onValueChange={(v: ReportGoal) => setForm({ ...form, report_goal: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="ecommerce">Ecommerce</SelectItem>
-                      <SelectItem value="lead_gen">Lead gen</SelectItem>
+                      <SelectItem value="sales">Sales</SelectItem>
+                      <SelectItem value="leads">Leads</SelectItem>
                       <SelectItem value="growth">Growth</SelectItem>
+                      <SelectItem value="awareness">Awareness</SelectItem>
+                      <SelectItem value="website_traffic">Website traffic</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
