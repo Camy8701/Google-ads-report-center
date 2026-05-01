@@ -25,7 +25,7 @@ export default function Clients() {
     website: "",
     brand_notes: "",
     google_ads_customer_id: "",
-    currency: "USD",
+    currency: "EUR",
   });
 
   const load = async () => {
@@ -53,7 +53,7 @@ export default function Clients() {
       const { error: aaErr } = await supabase.from("ad_accounts").insert([{
         client_id: inserted.id,
         google_ads_customer_id: cleanCid,
-        currency: form.currency || "USD",
+        currency: form.currency || "EUR",
         label: form.name,
         data_source_status: "mock",
       } as any]);
@@ -62,7 +62,7 @@ export default function Clients() {
 
     toast.success("Client created");
     setOpen(false);
-    setForm({ name: "", business_type: "ecommerce", report_goal: "ecommerce", industry: "", website: "", brand_notes: "", google_ads_customer_id: "", currency: "USD" });
+    setForm({ name: "", business_type: "ecommerce", report_goal: "ecommerce", industry: "", website: "", brand_notes: "", google_ads_customer_id: "", currency: "EUR" });
     load();
   };
 
@@ -123,7 +123,7 @@ export default function Clients() {
                     <Input
                       value={form.currency}
                       onChange={(e) => setForm({ ...form, currency: e.target.value.toUpperCase() })}
-                      placeholder="USD"
+                      placeholder="EUR"
                       maxLength={3}
                     />
                   </Field>
