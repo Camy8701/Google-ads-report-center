@@ -11,13 +11,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, ArrowUpRight } from "lucide-react";
 import { toast } from "sonner";
-import { getClientReportGoal, getReportGoalLabel, getVisibleBrandNotes, withReportGoalMeta, type ReportGoal } from "@/lib/reportGoal";
+import { getBusinessTypeLabel, getClientReportGoal, getReportGoalLabel, getVisibleBrandNotes, withReportGoalMeta, type ReportGoal } from "@/lib/reportGoal";
+
+type BusinessType = "ecommerce" | "lead_gen" | "local_services" | "saas";
 
 export default function Clients() {
   const [clients, setClients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState<{ name: string; business_type: "ecommerce" | "lead_gen"; report_goal: ReportGoal; industry: string; website: string; brand_notes: string; google_ads_customer_id: string; currency: string }>({
+  const [form, setForm] = useState<{ name: string; business_type: BusinessType; report_goal: ReportGoal; industry: string; website: string; brand_notes: string; google_ads_customer_id: string; currency: string }>({
     name: "",
     business_type: "ecommerce",
     report_goal: "ecommerce",
@@ -85,11 +87,13 @@ export default function Clients() {
                   <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Acme Outdoor" />
                 </Field>
                 <Field label="Business type">
-                  <Select value={form.business_type} onValueChange={(v: "ecommerce" | "lead_gen") => setForm({ ...form, business_type: v, report_goal: form.report_goal === "growth" ? "growth" : v })}>
+                  <Select value={form.business_type} onValueChange={(v: BusinessType) => setForm({ ...form, business_type: v, report_goal: form.report_goal === "growth" ? "growth" : (v === "ecommerce" ? "ecommerce" : "lead_gen") })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="ecommerce">Ecommerce</SelectItem>
                       <SelectItem value="lead_gen">Lead gen</SelectItem>
+                      <SelectItem value="local_services">Local services</SelectItem>
+                      <SelectItem value="saas">SaaS</SelectItem>
                     </SelectContent>
                   </Select>
                 </Field>
@@ -149,7 +153,7 @@ export default function Clients() {
               <div>
                 <div className="mb-1 flex flex-wrap items-center gap-2">
                   <p className="text-[11px] uppercase tracking-[0.15em] lynck-muted">
-                    {c.business_type === "ecommerce" ? "Ecommerce" : "Lead gen"}
+                    {getBusinessTypeLabel(c.business_type)}
                   </p>
                   <span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-primary">
                     {getReportGoalLabel(getClientReportGoal(c.brand_notes, c.business_type))}

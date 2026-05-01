@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { fmtDate, fmtMonthShort } from "@/lib/format";
 import { ArrowLeft, Save, FileText, Mail, Building2 } from "lucide-react";
 import { toast } from "sonner";
-import { getClientReportGoal, getReportGoalLabel, getVisibleBrandNotes, withReportGoalMeta, type ReportGoal } from "@/lib/reportGoal";
+import { getBusinessTypeLabel, getClientReportGoal, getReportGoalLabel, getVisibleBrandNotes, withReportGoalMeta, type ReportGoal } from "@/lib/reportGoal";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function ClientDetail() {
@@ -57,7 +57,7 @@ export default function ClientDetail() {
         <ArrowLeft className="size-4" /> Back to clients
       </Link>
       <PageHeader
-        eyebrow={`${client.business_type === "ecommerce" ? "Ecommerce" : "Lead gen"} · ${getReportGoalLabel(getClientReportGoal(client.brand_notes, client.business_type))}`}
+        eyebrow={`${getBusinessTypeLabel(client.business_type)} · ${getReportGoalLabel(getClientReportGoal(client.brand_notes, client.business_type))}`}
         title={client.name}
         description={client.industry || ""}
         actions={
@@ -89,6 +89,18 @@ export default function ClientDetail() {
           {editing ? (
             <div className="space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[11px] uppercase tracking-[0.15em] lynck-muted mb-1.5 block">Business type</label>
+                  <Select value={form.business_type} onValueChange={(v) => setForm({ ...form, business_type: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ecommerce">Ecommerce</SelectItem>
+                      <SelectItem value="lead_gen">Lead gen</SelectItem>
+                      <SelectItem value="local_services">Local services</SelectItem>
+                      <SelectItem value="saas">SaaS</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div>
                   <label className="text-[11px] uppercase tracking-[0.15em] lynck-muted mb-1.5 block">Reporting goal</label>
                   <Select value={form.report_goal} onValueChange={(v: ReportGoal) => setForm({ ...form, report_goal: v })}>

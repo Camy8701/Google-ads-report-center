@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { fmtMonthShort, fmtDate } from "@/lib/format";
 import { ArrowUpRight, FilePlus2, Users, FileText, Calendar, ArrowRight } from "lucide-react";
+import { getBusinessTypeLabel } from "@/lib/reportGoal";
 
 interface ClientRow {
   id: string;
@@ -138,7 +139,7 @@ export default function Dashboard() {
                       </Link>
                     </td>
                     <td className="px-5 py-4 lynck-muted">
-                      {c.business_type === "ecommerce" ? "Ecommerce" : "Lead gen"}
+                      {getBusinessTypeLabel(c.business_type)}
                     </td>
                     <td className="px-5 py-4 lynck-muted">
                       {l ? fmtMonthShort(l.period_month) : "—"}
