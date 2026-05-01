@@ -64,7 +64,7 @@ export default function Clients() {
 
     toast.success("Client created");
     setOpen(false);
-    setForm({ name: "", business_type: "ecommerce", report_goal: "ecommerce", industry: "", website: "", brand_notes: "", google_ads_customer_id: "", currency: "EUR" });
+    setForm({ name: "", business_type: "ecommerce", report_goal: "sales", industry: "", website: "", brand_notes: "", google_ads_customer_id: "", currency: "EUR" });
     load();
   };
 
