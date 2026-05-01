@@ -11,7 +11,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, ArrowUpRight } from "lucide-react";
 import { toast } from "sonner";
-import { getClientReportGoal, getReportGoalLabel, getVisibleBrandNotes, withReportGoalMeta, type ReportGoal } from "@/lib/reportGoal";
+import { getBusinessTypeLabel, getClientReportGoal, getReportGoalLabel, getVisibleBrandNotes, withReportGoalMeta, type ReportGoal } from "@/lib/reportGoal";
+
+type BusinessType = "ecommerce" | "lead_gen" | "local_services" | "saas";
 
 export default function Clients() {
   const [clients, setClients] = useState<any[]>([]);
