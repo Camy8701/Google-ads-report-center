@@ -22,7 +22,7 @@ export default function Clients() {
   const [form, setForm] = useState<{ name: string; business_type: BusinessType; report_goal: ReportGoal; industry: string; website: string; brand_notes: string; google_ads_customer_id: string; currency: string }>({
     name: "",
     business_type: "ecommerce",
-    report_goal: "ecommerce",
+    report_goal: "sales",
     industry: "",
     website: "",
     brand_notes: "",
