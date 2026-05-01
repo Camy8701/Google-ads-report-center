@@ -90,6 +90,18 @@ export default function ClientDetail() {
             <div className="space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
+                  <label className="text-[11px] uppercase tracking-[0.15em] lynck-muted mb-1.5 block">Business type</label>
+                  <Select value={form.business_type} onValueChange={(v) => setForm({ ...form, business_type: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ecommerce">Ecommerce</SelectItem>
+                      <SelectItem value="lead_gen">Lead gen</SelectItem>
+                      <SelectItem value="local_services">Local services</SelectItem>
+                      <SelectItem value="saas">SaaS</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
                   <label className="text-[11px] uppercase tracking-[0.15em] lynck-muted mb-1.5 block">Reporting goal</label>
                   <Select value={form.report_goal} onValueChange={(v: ReportGoal) => setForm({ ...form, report_goal: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
