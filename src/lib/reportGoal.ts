@@ -19,6 +19,21 @@ export const withReportGoalMeta = (brandNotes: string, reportGoal: ReportGoal) =
   return `<!-- report_goal:${reportGoal} -->\n${cleanNotes}`.trim();
 };
 
+export const getBusinessTypeLabel = (businessType?: string | null) => {
+  switch (businessType) {
+    case "ecommerce":
+      return "Ecommerce";
+    case "lead_gen":
+      return "Lead gen";
+    case "local_services":
+      return "Local services";
+    case "saas":
+      return "SaaS";
+    default:
+      return "—";
+  }
+};
+
 export const getReportGoalLabel = (reportGoal: ReportGoal) => {
   switch (reportGoal) {
     case "ecommerce":
