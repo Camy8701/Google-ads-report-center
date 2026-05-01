@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, ArrowUpRight } from "lucide-react";
 import { toast } from "sonner";
-import { getBusinessTypeLabel, getClientReportGoal, getReportGoalLabel, getVisibleBrandNotes, withReportGoalMeta, type ReportGoal } from "@/lib/reportGoal";
+import { getBusinessTypeLabel, getClientReportGoal, getDefaultReportGoal, getReportGoalLabel, getVisibleBrandNotes, withReportGoalMeta, type ReportGoal } from "@/lib/reportGoal";
 
 type BusinessType = "ecommerce" | "lead_gen" | "local_services" | "saas";
 
@@ -22,7 +22,7 @@ export default function Clients() {
   const [form, setForm] = useState<{ name: string; business_type: BusinessType; report_goal: ReportGoal; industry: string; website: string; brand_notes: string; google_ads_customer_id: string; currency: string }>({
     name: "",
     business_type: "ecommerce",
-    report_goal: "ecommerce",
+    report_goal: "sales",
     industry: "",
     website: "",
     brand_notes: "",
@@ -64,7 +64,7 @@ export default function Clients() {
 
     toast.success("Client created");
     setOpen(false);
-    setForm({ name: "", business_type: "ecommerce", report_goal: "ecommerce", industry: "", website: "", brand_notes: "", google_ads_customer_id: "", currency: "EUR" });
+    setForm({ name: "", business_type: "ecommerce", report_goal: "sales", industry: "", website: "", brand_notes: "", google_ads_customer_id: "", currency: "EUR" });
     load();
   };
 
@@ -87,7 +87,7 @@ export default function Clients() {
                   <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Acme Outdoor" />
                 </Field>
                 <Field label="Business type">
-                  <Select value={form.business_type} onValueChange={(v: BusinessType) => setForm({ ...form, business_type: v, report_goal: form.report_goal === "growth" ? "growth" : (v === "ecommerce" ? "ecommerce" : "lead_gen") })}>
+                  <Select value={form.business_type} onValueChange={(v: BusinessType) => setForm({ ...form, business_type: v, report_goal: getDefaultReportGoal(v) })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="ecommerce">Ecommerce</SelectItem>
@@ -101,9 +101,11 @@ export default function Clients() {
                   <Select value={form.report_goal} onValueChange={(v: ReportGoal) => setForm({ ...form, report_goal: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="ecommerce">Ecommerce</SelectItem>
-                      <SelectItem value="lead_gen">Lead gen</SelectItem>
+                      <SelectItem value="sales">Sales</SelectItem>
+                      <SelectItem value="leads">Leads</SelectItem>
                       <SelectItem value="growth">Growth</SelectItem>
+                      <SelectItem value="awareness">Awareness</SelectItem>
+                      <SelectItem value="website_traffic">Website traffic</SelectItem>
                     </SelectContent>
                   </Select>
                 </Field>

@@ -6,7 +6,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { fmtMonth, fmtNum, fmtMoney, fmtPct, fmtDate, delta } from "@/lib/format";
-import { getClientReportGoal, getReportGoalLabel, getVisibleBrandNotes, type ReportGoal } from "@/lib/reportGoal";
+import { getClientReportGoal, getReportGoalFamily, getReportGoalLabel, getVisibleBrandNotes, type ReportGoal, type ReportGoalFamily } from "@/lib/reportGoal";
 import { ArrowLeft, Save, Sparkles, Printer, CheckCircle2, FileDown, ArrowUp, ArrowDown, Minus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
@@ -276,14 +276,15 @@ export default function ReportView() {
   const appendix = sec("appendix");
 
   const reportGoal = getClientReportGoal(client?.brand_notes, client?.business_type);
+  const goalFamily = getReportGoalFamily(reportGoal);
   const summaryData = summary?.data || {};
   const takeaways: string[] = Array.isArray(summaryData.takeaways) ? summaryData.takeaways : [];
   const timeline = Array.isArray(summaryData.timeline) && summaryData.timeline.length ? summaryData.timeline : buildFallbackTimeline(metrics);
   const conversionSplit = Array.isArray(summaryData.conversionSplit) ? summaryData.conversionSplit : [];
   const leadActions = Array.isArray(summaryData.leadActions) ? summaryData.leadActions : [];
   const driverCards = Array.isArray(whatChanged?.data?.drivers) ? whatChanged?.data?.drivers : [];
-  const heroMetrics = getHeroMetrics(reportGoal, metrics, conversionSplit);
-  const winners = getCampaignWinners(metrics.top_campaigns || [], reportGoal);
+  const heroMetrics = getHeroMetrics(goalFamily, metrics, conversionSplit);
+  const winners = getCampaignWinners(metrics.top_campaigns || [], goalFamily);
 
   return (
     <div className="report-theme min-h-screen overflow-x-hidden bg-background">
@@ -370,26 +371,26 @@ export default function ReportView() {
           <div className="mt-6 grid gap-4 md:grid-cols-[1.6fr_1fr]">
             <ChartCard
               label="Six-month trend"
-              title={reportGoal === "ecommerce" ? "Spend vs return" : reportGoal === "lead_gen" ? "Spend vs hard output" : "Spend vs demand"}
+              title={goalFamily === "ecommerce" ? "Spend vs return" : goalFamily === "lead_gen" ? "Spend vs hard output" : "Spend vs demand"}
               body="A quick read on direction matters more than a paragraph of explanation here."
             >
-              <MiniTrendChart data={timeline} goal={reportGoal} />
+              <MiniTrendChart data={timeline} goal={goalFamily} />
             </ChartCard>
             <ChartCard
               label="Context"
-              title={reportGoal === "ecommerce" ? "Margin-aware view" : reportGoal === "lead_gen" ? "Lead mix" : "Efficiency pulse"}
-              body={reportGoal === "ecommerce"
+              title={goalFamily === "ecommerce" ? "Margin-aware view" : goalFamily === "lead_gen" ? "Lead mix" : "Efficiency pulse"}
+              body={goalFamily === "ecommerce"
                 ? "The account is being judged on value efficiency first, scale second."
-                : reportGoal === "lead_gen"
+                : goalFamily === "lead_gen"
                   ? "Soft conversions still matter, but the report now keeps hard conversions at the center."
                   : "This account is being read through momentum, traffic quality, and efficient reach."}
             >
-              {reportGoal === "lead_gen" ? (
+              {goalFamily === "lead_gen" ? (
                 <SplitMiniCard split={conversionSplit} />
               ) : (
                 <div className="grid gap-3">
                   <PulseLine label="MoM cost delta" value={Math.abs(delta(metrics.cost, metrics.prior?.cost || 0).pct).toFixed(1) + "%"} tone="info" />
-                  <PulseLine label={reportGoal === "ecommerce" ? "ROAS benchmark" : "Conversion pressure"} value={reportGoal === "ecommerce" ? `${metrics.roas.toFixed(2)}x` : `${fmtNum(metrics.conversions)} conversions`} tone="good" />
+                  <PulseLine label={goalFamily === "ecommerce" ? "ROAS benchmark" : "Conversion pressure"} value={goalFamily === "ecommerce" ? `${metrics.roas.toFixed(2)}x` : `${fmtNum(metrics.conversions)} conversions`} tone="good" />
                   <PulseLine label="Brand notes" value={getVisibleBrandNotes(client?.brand_notes) || "No additional briefing notes attached."} tone="muted" long />
                 </div>
               )}
@@ -406,15 +407,15 @@ export default function ReportView() {
           </div>
           <div className="grid gap-4 md:grid-cols-[1.45fr_1fr]">
             <ChartCard label="Performance comparison" title="Campaign ladder">
-              <CampaignComparisonChart campaigns={metrics.top_campaigns || []} goal={reportGoal} />
+              <CampaignComparisonChart campaigns={metrics.top_campaigns || []} goal={goalFamily} />
             </ChartCard>
             <ChartCard label="Budget allocation" title="Spend share">
               <SpendShareChart campaigns={metrics.top_campaigns || []} totalSpend={metrics.cost} />
             </ChartCard>
           </div>
           <div className="mt-4 grid gap-4 md:grid-cols-2">
-            <WinnerCard title="Top winner" campaign={winners.best} goal={reportGoal} />
-            <WinnerCard title="Weakest pocket" campaign={winners.weakest} goal={reportGoal} inverse />
+            <WinnerCard title="Top winner" campaign={winners.best} goal={goalFamily} />
+            <WinnerCard title="Weakest pocket" campaign={winners.weakest} goal={goalFamily} inverse />
           </div>
         </section>
 
@@ -433,13 +434,13 @@ export default function ReportView() {
 
           <div className="mt-10 grid gap-4 md:grid-cols-2">
             <ChartCard label="Search insight" title="Keyword pressure">
-              <KeywordInsightChart keywords={metrics.top_keywords || []} goal={reportGoal} />
+              <KeywordInsightChart keywords={metrics.top_keywords || []} goal={goalFamily} />
             </ChartCard>
-            {reportGoal === "ecommerce" ? (
+            {goalFamily === "ecommerce" ? (
               <ChartCard label="Product insight" title="Revenue concentration">
                 <ProductInsightChart products={metrics.top_products || []} />
               </ChartCard>
-            ) : reportGoal === "lead_gen" ? (
+            ) : goalFamily === "lead_gen" ? (
               <ChartCard label="Lead insight" title="Hard vs soft conversions">
                 <LeadInsightPanel split={conversionSplit} actions={leadActions} />
               </ChartCard>
@@ -653,7 +654,7 @@ function ChartCard({
   );
 }
 
-function MiniTrendChart({ data, goal }: { data: any[]; goal: ReportGoal }) {
+function MiniTrendChart({ data, goal }: { data: any[]; goal: ReportGoalFamily }) {
   const secondaryKey = goal === "ecommerce" ? "roas" : goal === "lead_gen" ? "conversions" : "clicks";
   const secondaryLabel = goal === "ecommerce" ? "ROAS" : goal === "lead_gen" ? "Conversions" : "Clicks";
   return (
@@ -704,7 +705,7 @@ function PulseLine({ label, value, tone, long }: { label: string; value: string;
   );
 }
 
-function CampaignComparisonChart({ campaigns, goal }: { campaigns: any[]; goal: ReportGoal }) {
+function CampaignComparisonChart({ campaigns, goal }: { campaigns: any[]; goal: ReportGoalFamily }) {
   const data = (campaigns || []).map((campaign) => ({
     name: campaign.name.replace(/\s*-\s*/g, " "),
     metric: goal === "ecommerce" ? campaign.roas : campaign.conversions,
@@ -751,7 +752,7 @@ function SpendShareChart({ campaigns, totalSpend }: { campaigns: any[]; totalSpe
   );
 }
 
-function WinnerCard({ title, campaign, goal, inverse = false }: { title: string; campaign?: any; goal: ReportGoal; inverse?: boolean }) {
+function WinnerCard({ title, campaign, goal, inverse = false }: { title: string; campaign?: any; goal: ReportGoalFamily; inverse?: boolean }) {
   if (!campaign) return null;
   return (
     <div className="lynck-card p-5">
@@ -790,7 +791,7 @@ function DriverGrid({ drivers }: { drivers: any[] }) {
   );
 }
 
-function KeywordInsightChart({ keywords, goal }: { keywords: any[]; goal: ReportGoal }) {
+function KeywordInsightChart({ keywords, goal }: { keywords: any[]; goal: ReportGoalFamily }) {
   const data = (keywords || []).slice(0, 4).map((keyword) => ({
     name: keyword.term,
     clicks: keyword.clicks,
@@ -929,8 +930,8 @@ function buildFallbackTimeline(metrics: MetricsRow) {
   ];
 }
 
-function getHeroMetrics(reportGoal: ReportGoal, metrics: MetricsRow, split: any[]) {
-  if (reportGoal === "ecommerce") {
+function getHeroMetrics(goalFamily: ReportGoalFamily, metrics: MetricsRow, split: any[]) {
+  if (goalFamily === "ecommerce") {
     return [
       { label: "Cost", value: fmtMoney(metrics.cost), now: metrics.cost, prior: metrics.prior?.cost, neutral: true },
       { label: "Conversions", value: fmtNum(metrics.conversions), now: metrics.conversions, prior: metrics.prior?.conversions },
@@ -938,7 +939,7 @@ function getHeroMetrics(reportGoal: ReportGoal, metrics: MetricsRow, split: any[
       { label: "ROAS", value: `${metrics.roas.toFixed(2)}x`, now: metrics.roas, prior: metrics.prior?.roas, footnote: "Primary account goal" },
     ];
   }
-  if (reportGoal === "lead_gen") {
+  if (goalFamily === "lead_gen") {
     return [
       { label: "Cost", value: fmtMoney(metrics.cost), now: metrics.cost, prior: metrics.prior?.cost, neutral: true },
       { label: "Hard conversions", value: fmtNum(split.find((item) => item.label === "Hard conversions")?.value || metrics.conversions), now: split.find((item) => item.label === "Hard conversions")?.value || metrics.conversions, prior: Math.round((metrics.prior?.conversions || 0) * 0.38) },
@@ -954,7 +955,7 @@ function getHeroMetrics(reportGoal: ReportGoal, metrics: MetricsRow, split: any[
   ];
 }
 
-function getCampaignWinners(campaigns: any[], goal: ReportGoal) {
+function getCampaignWinners(campaigns: any[], goal: ReportGoalFamily) {
   if (!campaigns?.length) return { best: undefined, weakest: undefined };
   const sorted = [...campaigns].sort((a, b) => {
     if (goal === "ecommerce") return (b.roas || 0) - (a.roas || 0);
