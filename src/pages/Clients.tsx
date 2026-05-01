@@ -87,11 +87,13 @@ export default function Clients() {
                   <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Acme Outdoor" />
                 </Field>
                 <Field label="Business type">
-                  <Select value={form.business_type} onValueChange={(v: "ecommerce" | "lead_gen") => setForm({ ...form, business_type: v, report_goal: form.report_goal === "growth" ? "growth" : v })}>
+                  <Select value={form.business_type} onValueChange={(v: BusinessType) => setForm({ ...form, business_type: v, report_goal: form.report_goal === "growth" ? "growth" : (v === "ecommerce" ? "ecommerce" : "lead_gen") })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="ecommerce">Ecommerce</SelectItem>
                       <SelectItem value="lead_gen">Lead gen</SelectItem>
+                      <SelectItem value="local_services">Local services</SelectItem>
+                      <SelectItem value="saas">SaaS</SelectItem>
                     </SelectContent>
                   </Select>
                 </Field>
