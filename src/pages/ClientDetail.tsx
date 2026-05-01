@@ -57,7 +57,7 @@ export default function ClientDetail() {
         <ArrowLeft className="size-4" /> Back to clients
       </Link>
       <PageHeader
-        eyebrow={`${client.business_type === "ecommerce" ? "Ecommerce" : "Lead gen"} · ${getReportGoalLabel(getClientReportGoal(client.brand_notes, client.business_type))}`}
+        eyebrow={`${getBusinessTypeLabel(client.business_type)} · ${getReportGoalLabel(getClientReportGoal(client.brand_notes, client.business_type))}`}
         title={client.name}
         description={client.industry || ""}
         actions={
