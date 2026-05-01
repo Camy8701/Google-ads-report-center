@@ -442,7 +442,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      business_type: "ecommerce" | "lead_gen"
+      business_type: "ecommerce" | "lead_gen" | "local_services" | "saas"
       data_source_status:
         | "mock"
         | "connected"
@@ -586,7 +586,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      business_type: ["ecommerce", "lead_gen"],
+      business_type: ["ecommerce", "lead_gen", "local_services", "saas"],
       data_source_status: [
         "mock",
         "connected",
