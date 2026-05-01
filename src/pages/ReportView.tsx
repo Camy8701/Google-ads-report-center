@@ -371,26 +371,26 @@ export default function ReportView() {
           <div className="mt-6 grid gap-4 md:grid-cols-[1.6fr_1fr]">
             <ChartCard
               label="Six-month trend"
-              title={reportGoal === "ecommerce" ? "Spend vs return" : reportGoal === "lead_gen" ? "Spend vs hard output" : "Spend vs demand"}
+              title={goalFamily === "ecommerce" ? "Spend vs return" : goalFamily === "lead_gen" ? "Spend vs hard output" : "Spend vs demand"}
               body="A quick read on direction matters more than a paragraph of explanation here."
             >
               <MiniTrendChart data={timeline} goal={reportGoal} />
             </ChartCard>
             <ChartCard
               label="Context"
-              title={reportGoal === "ecommerce" ? "Margin-aware view" : reportGoal === "lead_gen" ? "Lead mix" : "Efficiency pulse"}
-              body={reportGoal === "ecommerce"
+              title={goalFamily === "ecommerce" ? "Margin-aware view" : goalFamily === "lead_gen" ? "Lead mix" : "Efficiency pulse"}
+              body={goalFamily === "ecommerce"
                 ? "The account is being judged on value efficiency first, scale second."
-                : reportGoal === "lead_gen"
+                : goalFamily === "lead_gen"
                   ? "Soft conversions still matter, but the report now keeps hard conversions at the center."
                   : "This account is being read through momentum, traffic quality, and efficient reach."}
             >
-              {reportGoal === "lead_gen" ? (
+              {goalFamily === "lead_gen" ? (
                 <SplitMiniCard split={conversionSplit} />
               ) : (
                 <div className="grid gap-3">
                   <PulseLine label="MoM cost delta" value={Math.abs(delta(metrics.cost, metrics.prior?.cost || 0).pct).toFixed(1) + "%"} tone="info" />
-                  <PulseLine label={reportGoal === "ecommerce" ? "ROAS benchmark" : "Conversion pressure"} value={reportGoal === "ecommerce" ? `${metrics.roas.toFixed(2)}x` : `${fmtNum(metrics.conversions)} conversions`} tone="good" />
+                  <PulseLine label={goalFamily === "ecommerce" ? "ROAS benchmark" : "Conversion pressure"} value={goalFamily === "ecommerce" ? `${metrics.roas.toFixed(2)}x` : `${fmtNum(metrics.conversions)} conversions`} tone="good" />
                   <PulseLine label="Brand notes" value={getVisibleBrandNotes(client?.brand_notes) || "No additional briefing notes attached."} tone="muted" long />
                 </div>
               )}
@@ -436,11 +436,11 @@ export default function ReportView() {
             <ChartCard label="Search insight" title="Keyword pressure">
               <KeywordInsightChart keywords={metrics.top_keywords || []} goal={reportGoal} />
             </ChartCard>
-            {reportGoal === "ecommerce" ? (
+            {goalFamily === "ecommerce" ? (
               <ChartCard label="Product insight" title="Revenue concentration">
                 <ProductInsightChart products={metrics.top_products || []} />
               </ChartCard>
-            ) : reportGoal === "lead_gen" ? (
+            ) : goalFamily === "lead_gen" ? (
               <ChartCard label="Lead insight" title="Hard vs soft conversions">
                 <LeadInsightPanel split={conversionSplit} actions={leadActions} />
               </ChartCard>
@@ -931,7 +931,7 @@ function buildFallbackTimeline(metrics: MetricsRow) {
 }
 
 function getHeroMetrics(reportGoal: ReportGoal, metrics: MetricsRow, split: any[]) {
-  if (reportGoal === "ecommerce") {
+  if (goalFamily === "ecommerce") {
     return [
       { label: "Cost", value: fmtMoney(metrics.cost), now: metrics.cost, prior: metrics.prior?.cost, neutral: true },
       { label: "Conversions", value: fmtNum(metrics.conversions), now: metrics.conversions, prior: metrics.prior?.conversions },
@@ -939,7 +939,7 @@ function getHeroMetrics(reportGoal: ReportGoal, metrics: MetricsRow, split: any[
       { label: "ROAS", value: `${metrics.roas.toFixed(2)}x`, now: metrics.roas, prior: metrics.prior?.roas, footnote: "Primary account goal" },
     ];
   }
-  if (reportGoal === "lead_gen") {
+  if (goalFamily === "lead_gen") {
     return [
       { label: "Cost", value: fmtMoney(metrics.cost), now: metrics.cost, prior: metrics.prior?.cost, neutral: true },
       { label: "Hard conversions", value: fmtNum(split.find((item) => item.label === "Hard conversions")?.value || metrics.conversions), now: split.find((item) => item.label === "Hard conversions")?.value || metrics.conversions, prior: Math.round((metrics.prior?.conversions || 0) * 0.38) },
