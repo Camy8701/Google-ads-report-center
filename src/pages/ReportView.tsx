@@ -276,14 +276,15 @@ export default function ReportView() {
   const appendix = sec("appendix");
 
   const reportGoal = getClientReportGoal(client?.brand_notes, client?.business_type);
+  const goalFamily = getReportGoalFamily(reportGoal);
   const summaryData = summary?.data || {};
   const takeaways: string[] = Array.isArray(summaryData.takeaways) ? summaryData.takeaways : [];
   const timeline = Array.isArray(summaryData.timeline) && summaryData.timeline.length ? summaryData.timeline : buildFallbackTimeline(metrics);
   const conversionSplit = Array.isArray(summaryData.conversionSplit) ? summaryData.conversionSplit : [];
   const leadActions = Array.isArray(summaryData.leadActions) ? summaryData.leadActions : [];
   const driverCards = Array.isArray(whatChanged?.data?.drivers) ? whatChanged?.data?.drivers : [];
-  const heroMetrics = getHeroMetrics(reportGoal, metrics, conversionSplit);
-  const winners = getCampaignWinners(metrics.top_campaigns || [], reportGoal);
+  const heroMetrics = getHeroMetrics(goalFamily, metrics, conversionSplit);
+  const winners = getCampaignWinners(metrics.top_campaigns || [], goalFamily);
 
   return (
     <div className="report-theme min-h-screen overflow-x-hidden bg-background">
