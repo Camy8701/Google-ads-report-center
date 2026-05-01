@@ -45,11 +45,24 @@ export default function Clients() {
       website: form.website,
       brand_notes: withReportGoalMeta(form.brand_notes, form.report_goal),
     };
-    const { error } = await supabase.from("clients").insert([payload as any]);
-    if (error) return toast.error(error.message);
+    const { data: inserted, error } = await supabase.from("clients").insert([payload as any]).select().single();
+    if (error || !inserted) return toast.error(error?.message || "Failed to create client");
+
+    const cleanCid = form.google_ads_customer_id.replace(/\D/g, "");
+    if (cleanCid) {
+      const { error: aaErr } = await supabase.from("ad_accounts").insert([{
+        client_id: inserted.id,
+        google_ads_customer_id: cleanCid,
+        currency: form.currency || "USD",
+        label: form.name,
+        data_source_status: "mock",
+      } as any]);
+      if (aaErr) toast.error(`Client created, but ad account failed: ${aaErr.message}`);
+    }
+
     toast.success("Client created");
     setOpen(false);
-    setForm({ name: "", business_type: "ecommerce", report_goal: "ecommerce", industry: "", website: "", brand_notes: "" });
+    setForm({ name: "", business_type: "ecommerce", report_goal: "ecommerce", industry: "", website: "", brand_notes: "", google_ads_customer_id: "", currency: "USD" });
     load();
   };
 
