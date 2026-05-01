@@ -374,7 +374,7 @@ export default function ReportView() {
               title={goalFamily === "ecommerce" ? "Spend vs return" : goalFamily === "lead_gen" ? "Spend vs hard output" : "Spend vs demand"}
               body="A quick read on direction matters more than a paragraph of explanation here."
             >
-              <MiniTrendChart data={timeline} goal={reportGoal} />
+              <MiniTrendChart data={timeline} goal={goalFamily} />
             </ChartCard>
             <ChartCard
               label="Context"
@@ -407,15 +407,15 @@ export default function ReportView() {
           </div>
           <div className="grid gap-4 md:grid-cols-[1.45fr_1fr]">
             <ChartCard label="Performance comparison" title="Campaign ladder">
-              <CampaignComparisonChart campaigns={metrics.top_campaigns || []} goal={reportGoal} />
+              <CampaignComparisonChart campaigns={metrics.top_campaigns || []} goal={goalFamily} />
             </ChartCard>
             <ChartCard label="Budget allocation" title="Spend share">
               <SpendShareChart campaigns={metrics.top_campaigns || []} totalSpend={metrics.cost} />
             </ChartCard>
           </div>
           <div className="mt-4 grid gap-4 md:grid-cols-2">
-            <WinnerCard title="Top winner" campaign={winners.best} goal={reportGoal} />
-            <WinnerCard title="Weakest pocket" campaign={winners.weakest} goal={reportGoal} inverse />
+            <WinnerCard title="Top winner" campaign={winners.best} goal={goalFamily} />
+            <WinnerCard title="Weakest pocket" campaign={winners.weakest} goal={goalFamily} inverse />
           </div>
         </section>
 
@@ -434,7 +434,7 @@ export default function ReportView() {
 
           <div className="mt-10 grid gap-4 md:grid-cols-2">
             <ChartCard label="Search insight" title="Keyword pressure">
-              <KeywordInsightChart keywords={metrics.top_keywords || []} goal={reportGoal} />
+              <KeywordInsightChart keywords={metrics.top_keywords || []} goal={goalFamily} />
             </ChartCard>
             {goalFamily === "ecommerce" ? (
               <ChartCard label="Product insight" title="Revenue concentration">
