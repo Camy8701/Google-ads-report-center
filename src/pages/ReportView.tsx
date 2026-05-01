@@ -851,7 +851,7 @@ function ProductInsightChart({ products }: { products: any[] }) {
         {data.map((product) => (
           <div key={product.name} className="flex items-center justify-between text-sm">
             <span>{product.name}</span>
-            <span style={{ color: reportPalette.data }}>Margin {product.margin.toFixed(1)}%</span>
+            <span style={{ color: reportPalette.data }}>Margin {Number(product.margin ?? 0).toFixed(1)}%</span>
           </div>
         ))}
       </div>
