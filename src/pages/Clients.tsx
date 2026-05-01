@@ -111,6 +111,23 @@ export default function Clients() {
                     <Input value={form.website} onChange={(e) => setForm({ ...form, website: e.target.value })} />
                   </Field>
                 </div>
+                <div className="grid grid-cols-[2fr_1fr] gap-3">
+                  <Field label="Google Ads customer ID">
+                    <Input
+                      value={form.google_ads_customer_id}
+                      onChange={(e) => setForm({ ...form, google_ads_customer_id: e.target.value })}
+                      placeholder="123-456-7890"
+                    />
+                  </Field>
+                  <Field label="Currency">
+                    <Input
+                      value={form.currency}
+                      onChange={(e) => setForm({ ...form, currency: e.target.value.toUpperCase() })}
+                      placeholder="USD"
+                      maxLength={3}
+                    />
+                  </Field>
+                </div>
                 <Field label="Brand notes">
                   <Textarea rows={4} value={form.brand_notes} onChange={(e) => setForm({ ...form, brand_notes: e.target.value })} placeholder="Tone, voice, KPIs to focus on…" />
                 </Field>
