@@ -87,7 +87,7 @@ export default function Clients() {
                   <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Acme Outdoor" />
                 </Field>
                 <Field label="Business type">
-                  <Select value={form.business_type} onValueChange={(v: BusinessType) => setForm({ ...form, business_type: v, report_goal: form.report_goal === "growth" ? "growth" : (v === "ecommerce" ? "ecommerce" : "lead_gen") })}>
+                  <Select value={form.business_type} onValueChange={(v: BusinessType) => setForm({ ...form, business_type: v, report_goal: getDefaultReportGoal(v) })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="ecommerce">Ecommerce</SelectItem>
@@ -101,9 +101,11 @@ export default function Clients() {
                   <Select value={form.report_goal} onValueChange={(v: ReportGoal) => setForm({ ...form, report_goal: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="ecommerce">Ecommerce</SelectItem>
-                      <SelectItem value="lead_gen">Lead gen</SelectItem>
+                      <SelectItem value="sales">Sales</SelectItem>
+                      <SelectItem value="leads">Leads</SelectItem>
                       <SelectItem value="growth">Growth</SelectItem>
+                      <SelectItem value="awareness">Awareness</SelectItem>
+                      <SelectItem value="website_traffic">Website traffic</SelectItem>
                     </SelectContent>
                   </Select>
                 </Field>
