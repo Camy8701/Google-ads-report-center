@@ -153,7 +153,7 @@ export default function Clients() {
               <div>
                 <div className="mb-1 flex flex-wrap items-center gap-2">
                   <p className="text-[11px] uppercase tracking-[0.15em] lynck-muted">
-                    {c.business_type === "ecommerce" ? "Ecommerce" : "Lead gen"}
+                    {getBusinessTypeLabel(c.business_type)}
                   </p>
                   <span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-primary">
                     {getReportGoalLabel(getClientReportGoal(c.brand_notes, c.business_type))}
