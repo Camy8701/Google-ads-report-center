@@ -654,7 +654,7 @@ function ChartCard({
   );
 }
 
-function MiniTrendChart({ data, goal }: { data: any[]; goal: ReportGoal }) {
+function MiniTrendChart({ data, goal }: { data: any[]; goal: ReportGoalFamily }) {
   const secondaryKey = goal === "ecommerce" ? "roas" : goal === "lead_gen" ? "conversions" : "clicks";
   const secondaryLabel = goal === "ecommerce" ? "ROAS" : goal === "lead_gen" ? "Conversions" : "Clicks";
   return (
@@ -705,7 +705,7 @@ function PulseLine({ label, value, tone, long }: { label: string; value: string;
   );
 }
 
-function CampaignComparisonChart({ campaigns, goal }: { campaigns: any[]; goal: ReportGoal }) {
+function CampaignComparisonChart({ campaigns, goal }: { campaigns: any[]; goal: ReportGoalFamily }) {
   const data = (campaigns || []).map((campaign) => ({
     name: campaign.name.replace(/\s*-\s*/g, " "),
     metric: goal === "ecommerce" ? campaign.roas : campaign.conversions,
@@ -752,7 +752,7 @@ function SpendShareChart({ campaigns, totalSpend }: { campaigns: any[]; totalSpe
   );
 }
 
-function WinnerCard({ title, campaign, goal, inverse = false }: { title: string; campaign?: any; goal: ReportGoal; inverse?: boolean }) {
+function WinnerCard({ title, campaign, goal, inverse = false }: { title: string; campaign?: any; goal: ReportGoalFamily; inverse?: boolean }) {
   if (!campaign) return null;
   return (
     <div className="lynck-card p-5">
@@ -791,7 +791,7 @@ function DriverGrid({ drivers }: { drivers: any[] }) {
   );
 }
 
-function KeywordInsightChart({ keywords, goal }: { keywords: any[]; goal: ReportGoal }) {
+function KeywordInsightChart({ keywords, goal }: { keywords: any[]; goal: ReportGoalFamily }) {
   const data = (keywords || []).slice(0, 4).map((keyword) => ({
     name: keyword.term,
     clicks: keyword.clicks,
@@ -955,7 +955,7 @@ function getHeroMetrics(goalFamily: ReportGoalFamily, metrics: MetricsRow, split
   ];
 }
 
-function getCampaignWinners(campaigns: any[], goal: ReportGoal) {
+function getCampaignWinners(campaigns: any[], goal: ReportGoalFamily) {
   if (!campaigns?.length) return { best: undefined, weakest: undefined };
   const sorted = [...campaigns].sort((a, b) => {
     if (goal === "ecommerce") return (b.roas || 0) - (a.roas || 0);
