@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { fmtMonthShort, fmtDate } from "@/lib/format";
 import { ArrowUpRight, FilePlus2, Users, FileText, Calendar, ArrowRight } from "lucide-react";
+import { getBusinessTypeLabel } from "@/lib/reportGoal";
 
 interface ClientRow {
   id: string;
