@@ -18,9 +18,10 @@ const monthLabels = (periodMonth: string) => {
 };
 
 export function generateMockReport({ businessType, reportGoal, periodMonth }: GenerateMockReportInput) {
-  const isEcom = reportGoal === "ecommerce" || businessType === "ecommerce";
-  const isLeadGen = reportGoal === "lead_gen";
-  const isGrowth = reportGoal === "growth";
+  const goalFamily = getReportGoalFamily(reportGoal);
+  const isEcom = goalFamily === "ecommerce" || businessType === "ecommerce";
+  const isLeadGen = goalFamily === "lead_gen";
+  const isGrowth = goalFamily === "growth";
 
   const r = (min: number, max: number) => Math.round(min + Math.random() * (max - min));
   const rf = (min: number, max: number, d = 2) => Number((min + Math.random() * (max - min)).toFixed(d));
