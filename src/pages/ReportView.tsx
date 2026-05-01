@@ -930,7 +930,7 @@ function buildFallbackTimeline(metrics: MetricsRow) {
   ];
 }
 
-function getHeroMetrics(reportGoal: ReportGoal, metrics: MetricsRow, split: any[]) {
+function getHeroMetrics(goalFamily: ReportGoalFamily, metrics: MetricsRow, split: any[]) {
   if (goalFamily === "ecommerce") {
     return [
       { label: "Cost", value: fmtMoney(metrics.cost), now: metrics.cost, prior: metrics.prior?.cost, neutral: true },
