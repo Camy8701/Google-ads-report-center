@@ -139,7 +139,7 @@ export default function Dashboard() {
                       </Link>
                     </td>
                     <td className="px-5 py-4 lynck-muted">
-                      {c.business_type === "ecommerce" ? "Ecommerce" : "Lead gen"}
+                      {getBusinessTypeLabel(c.business_type)}
                     </td>
                     <td className="px-5 py-4 lynck-muted">
                       {l ? fmtMonthShort(l.period_month) : "—"}
