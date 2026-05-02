@@ -250,7 +250,8 @@ function buildTimeline(reportMonth: string, metrics: MetricsRow, rawTimeline: an
 }
 
 function isImportedGoogleAdsShape(rawMetrics: MetricsRow) {
-  const topKeywords = asArray<any>(rawMetrics.top_search_terms ?? rawMetrics.top_keywords);
+  const rawST = asArray<any>(rawMetrics.top_search_terms);
+  const topKeywords = rawST.length > 0 ? rawST : asArray<any>(rawMetrics.top_keywords);
   const topProducts = asArray<any>(rawMetrics.top_products);
   const topCampaigns = asArray<any>(rawMetrics.top_campaigns);
   return topKeywords.some((item) => "text" in item) || topProducts.some((item) => "title" in item) || topCampaigns.some((item) => "cost" in item && !("spend" in item));
@@ -568,7 +569,8 @@ export default function ReportView() {
       if (goalFamily === "lead_gen") return (b.conversions || 0) - (a.conversions || 0);
       return (b.clicks || 0) - (a.clicks || 0);
     });
-  const topKeywords = aggregateKeywords(normalizeKeywords(asArray<any>(displayMetrics.top_search_terms ?? displayMetrics.top_keywords)))
+  const rawSearchTerms = asArray<any>(displayMetrics.top_search_terms);
+  const topKeywords = aggregateKeywords(normalizeKeywords(rawSearchTerms.length > 0 ? rawSearchTerms : asArray<any>(displayMetrics.top_keywords)))
     .filter((keyword) => Number(keyword.clicks || 0) > 0)
     .sort((a, b) => (b.clicks || 0) - (a.clicks || 0) || (b.conversions || 0) - (a.conversions || 0));
   const topProducts = aggregateProducts(normalizeProducts(asArray<any>(displayMetrics.top_products)))
