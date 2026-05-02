@@ -574,10 +574,10 @@ export default function ReportView() {
   const topProducts = aggregateProducts(normalizeProducts(asArray<any>(displayMetrics.top_products)))
     .sort((a, b) => (b.clicks || 0) - (a.clicks || 0) || (b.conversions || 0) - (a.conversions || 0));
   const deviceSplit = buildDeviceSplit(displayMetrics);
-  const liveSummary = useLiveDerivedContent ? buildLiveSummary(reportGoal, displayMetrics, spendCampaigns) : null;
-  const liveWhatChanged = useLiveDerivedContent ? buildLiveWhatChanged(reportGoal, displayMetrics) : null;
-  const liveOpportunities = useLiveDerivedContent ? buildLiveOpportunities(reportGoal, spendCampaigns, topKeywords) : null;
-  const liveRecommendations = useLiveDerivedContent ? buildLiveRecommendations(reportGoal, spendCampaigns, topKeywords, topProducts) : [];
+  const liveSummary = useLiveDerivedContent ? buildLiveSummary(goalFamily, displayMetrics, spendCampaigns) : null;
+  const liveWhatChanged = useLiveDerivedContent ? buildLiveWhatChanged(goalFamily, displayMetrics) : null;
+  const liveOpportunities = useLiveDerivedContent ? buildLiveOpportunities(goalFamily, spendCampaigns, topKeywords) : null;
+  const liveRecommendations = useLiveDerivedContent ? buildLiveRecommendations(goalFamily, spendCampaigns, topKeywords, topProducts) : [];
   const summaryBody = useLiveDerivedContent ? liveSummary?.body || summary?.body || "" : summary?.body || "";
   const takeaways: string[] = useLiveDerivedContent
     ? asArray<string>(liveSummary?.takeaways)
