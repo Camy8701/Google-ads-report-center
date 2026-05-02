@@ -70,7 +70,7 @@ const normalizePct = (value: unknown) => {
   return Math.abs(n) <= 1 ? n * 100 : n;
 };
 
-function normalizeCampaigns(campaigns: any[], reportGoal: ReportGoal) {
+function normalizeCampaigns(campaigns: any[], reportGoal: ReportGoalFamily) {
   const safeCampaigns = asArray<any>(campaigns).map((campaign) => ({
     ...campaign,
     spend: Number(campaign?.spend ?? campaign?.cost ?? 0),
@@ -256,7 +256,7 @@ function isImportedGoogleAdsShape(rawMetrics: MetricsRow) {
   return topKeywords.some((item) => "text" in item) || topProducts.some((item) => "title" in item) || topCampaigns.some((item) => "cost" in item && !("spend" in item));
 }
 
-function buildLiveSummary(reportGoal: ReportGoal, metrics: MetricsRow, topCampaigns: any[]) {
+function buildLiveSummary(reportGoal: ReportGoalFamily, metrics: MetricsRow, topCampaigns: any[]) {
   const bestCampaign = topCampaigns[0];
   if (reportGoal === "ecommerce") {
     return {
@@ -288,7 +288,7 @@ function buildLiveSummary(reportGoal: ReportGoal, metrics: MetricsRow, topCampai
   };
 }
 
-function buildLiveWhatChanged(reportGoal: ReportGoal, metrics: MetricsRow) {
+function buildLiveWhatChanged(reportGoal: ReportGoalFamily, metrics: MetricsRow) {
   const costDelta = delta(metrics.cost, metrics.prior?.cost || 0);
   const cpcDelta = delta(metrics.cpc, metrics.prior?.cpc || 0);
   const convRateDelta = delta(metrics.conversion_rate, metrics.prior?.conversion_rate || 0);
@@ -310,7 +310,7 @@ function buildLiveWhatChanged(reportGoal: ReportGoal, metrics: MetricsRow) {
   };
 }
 
-function buildLiveOpportunities(reportGoal: ReportGoal, topCampaigns: any[], topKeywords: any[]) {
+function buildLiveOpportunities(reportGoal: ReportGoalFamily, topCampaigns: any[], topKeywords: any[]) {
   const weakCampaign = [...topCampaigns].reverse().find((item) => (item.spend || 0) > 0);
   const strongestKeyword = topKeywords[0];
   if (reportGoal === "ecommerce") {
@@ -322,7 +322,7 @@ function buildLiveOpportunities(reportGoal: ReportGoal, topCampaigns: any[], top
   return `The clearest upside is to keep the strongest demand themes live while cutting placements and campaign pockets that add spend without enough downstream response. ${weakCampaign ? `${weakCampaign.name} is the first area to review.` : ""}`.trim();
 }
 
-function buildLiveRecommendations(reportGoal: ReportGoal, topCampaigns: any[], topKeywords: any[], topProducts: any[]) {
+function buildLiveRecommendations(reportGoal: ReportGoalFamily, topCampaigns: any[], topKeywords: any[], topProducts: any[]) {
   const sortedCampaigns = [...topCampaigns].sort((a, b) => (reportGoal === "ecommerce" ? (b.roas || 0) - (a.roas || 0) : (b.conversions || 0) - (a.conversions || 0)));
   const bestCampaign = sortedCampaigns[0];
   const weakestCampaign = [...sortedCampaigns].reverse().find((item) => (item.spend || 0) > 0) || sortedCampaigns[sortedCampaigns.length - 1];
