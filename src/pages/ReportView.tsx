@@ -258,7 +258,7 @@ function isImportedGoogleAdsShape(rawMetrics: MetricsRow) {
 
 function buildLiveSummary(reportGoal: ReportGoalFamily, metrics: MetricsRow, topCampaigns: any[]) {
   const bestCampaign = topCampaigns[0];
-  if (goalFamily === "ecommerce") {
+  if (reportGoal === "ecommerce") {
     return {
       body: `I have prepared the monthly readout using the actual account data for this period. Spend landed at ${fmtMoney(metrics.cost)} and produced ${fmtMoney(metrics.conversion_value)} in tracked value, keeping ROAS at ${metrics.roas.toFixed(2)}x. ${bestCampaign ? `${bestCampaign.name} was the strongest efficiency driver in the account.` : "This month should be read through return, not just volume."}`,
       takeaways: [
@@ -268,7 +268,7 @@ function buildLiveSummary(reportGoal: ReportGoalFamily, metrics: MetricsRow, top
       ],
     };
   }
-  if (goalFamily === "lead_gen") {
+  if (reportGoal === "lead_gen") {
     return {
       body: `I have prepared the monthly readout using the actual account data for this period. Spend landed at ${fmtMoney(metrics.cost)} and drove ${fmtNum(metrics.conversions)} tracked conversions at ${fmtMoney(metrics.cpa)} CPA. ${bestCampaign ? `${bestCampaign.name} was the strongest lead source in the account.` : "The account should be judged on hard output first."}`,
       takeaways: [
@@ -294,9 +294,9 @@ function buildLiveWhatChanged(reportGoal: ReportGoalFamily, metrics: MetricsRow)
   const convRateDelta = delta(metrics.conversion_rate, metrics.prior?.conversion_rate || 0);
   const roasDelta = delta(metrics.roas, metrics.prior?.roas || 0);
 
-  const primaryDriver = goalFamily === "ecommerce"
+  const primaryDriver = reportGoal === "ecommerce"
     ? `spend ${costDelta.dir === "down" ? "pulled back" : costDelta.dir === "up" ? "scaled up" : "held broadly flat"} while return efficiency ${roasDelta.dir === "up" ? "improved" : roasDelta.dir === "down" ? "softened" : "held roughly flat"}`
-    : goalFamily === "lead_gen"
+    : reportGoal === "lead_gen"
       ? `lead volume ${delta(metrics.conversions, metrics.prior?.conversions || 0).dir === "up" ? "improved" : "softened"} while CPA ${delta(metrics.cpa, metrics.prior?.cpa || 0).dir === "down" ? "became more efficient" : "came under pressure"}`
       : `traffic volume ${delta(metrics.clicks, metrics.prior?.clicks || 0).dir === "up" ? "expanded" : "contracted"} while CPC ${cpcDelta.dir === "down" ? "eased" : cpcDelta.dir === "up" ? "rose" : "held flat"}`;
 
@@ -313,17 +313,17 @@ function buildLiveWhatChanged(reportGoal: ReportGoalFamily, metrics: MetricsRow)
 function buildLiveOpportunities(reportGoal: ReportGoalFamily, topCampaigns: any[], topKeywords: any[]) {
   const weakCampaign = [...topCampaigns].reverse().find((item) => (item.spend || 0) > 0);
   const strongestKeyword = topKeywords[0];
-  if (goalFamily === "ecommerce") {
+  if (reportGoal === "ecommerce") {
     return `The clearest upside is to shift more weight toward the campaigns and search themes already converting, while reducing exposure in campaigns still spending without return. ${strongestKeyword ? `${strongestKeyword.term} is one of the strongest proven demand signals in the account.` : ""}`.trim();
   }
-  if (goalFamily === "lead_gen") {
+  if (reportGoal === "lead_gen") {
     return `The clearest upside is to weight budget toward the campaigns already producing conversions efficiently, while trimming broader coverage that consumes spend without enough hard output. ${weakCampaign ? `${weakCampaign.name} is the first area to review.` : ""}`.trim();
   }
   return `The clearest upside is to keep the strongest demand themes live while cutting placements and campaign pockets that add spend without enough downstream response. ${weakCampaign ? `${weakCampaign.name} is the first area to review.` : ""}`.trim();
 }
 
 function buildLiveRecommendations(reportGoal: ReportGoalFamily, topCampaigns: any[], topKeywords: any[], topProducts: any[]) {
-  const sortedCampaigns = [...topCampaigns].sort((a, b) => (goalFamily === "ecommerce" ? (b.roas || 0) - (a.roas || 0) : (b.conversions || 0) - (a.conversions || 0)));
+  const sortedCampaigns = [...topCampaigns].sort((a, b) => (reportGoal === "ecommerce" ? (b.roas || 0) - (a.roas || 0) : (b.conversions || 0) - (a.conversions || 0)));
   const bestCampaign = sortedCampaigns[0];
   const weakestCampaign = [...sortedCampaigns].reverse().find((item) => (item.spend || 0) > 0) || sortedCampaigns[sortedCampaigns.length - 1];
   const bestKeyword = topKeywords[0];
@@ -335,7 +335,7 @@ function buildLiveRecommendations(reportGoal: ReportGoalFamily, topCampaigns: an
       position: 1,
       title: bestCampaign ? `Weight more spend toward ${bestCampaign.name}` : "Weight more spend toward the strongest campaign",
       why: bestCampaign ? `${bestCampaign.name} is currently doing the best efficiency work in the account.` : "A small part of the account is carrying most of the performance.",
-      expected_impact: goalFamily === "ecommerce" ? "Protect return while scaling qualified revenue." : "Improve output without raising blended cost too quickly.",
+      expected_impact: reportGoal === "ecommerce" ? "Protect return while scaling qualified revenue." : "Improve output without raising blended cost too quickly.",
       urgency: "medium",
     },
     {
@@ -349,10 +349,10 @@ function buildLiveRecommendations(reportGoal: ReportGoalFamily, topCampaigns: an
     {
       id: "live-rec-3",
       position: 3,
-      title: goalFamily === "ecommerce"
+      title: reportGoal === "ecommerce"
         ? `Expand around ${bestProduct?.name || bestKeyword?.term || "the strongest product/query set"}`
         : `Expand around ${bestKeyword?.term || "the strongest search themes"}`,
-      why: goalFamily === "ecommerce"
+      why: reportGoal === "ecommerce"
         ? "The strongest product and search demand pockets are already proving where intent sits."
         : "The best converting search themes are the cleanest expansion path.",
       expected_impact: "Improve concentration around proven demand instead of scaling broadly.",
@@ -1263,7 +1263,7 @@ function InsightNote({ label, body }: { label: string; body: string }) {
 }
 
 function getHeroMetrics(reportGoal: ReportGoalFamily, metrics: MetricsRow, split: any[]) {
-  if (goalFamily === "ecommerce") {
+  if (reportGoal === "ecommerce") {
     return [
       { label: "Cost", value: fmtMoney(metrics.cost), now: metrics.cost, prior: metrics.prior?.cost, neutral: true },
       { label: "Conversions", value: fmtNum(metrics.conversions), now: metrics.conversions, prior: metrics.prior?.conversions },
@@ -1271,7 +1271,7 @@ function getHeroMetrics(reportGoal: ReportGoalFamily, metrics: MetricsRow, split
       { label: "ROAS", value: `${metrics.roas.toFixed(2)}x`, now: metrics.roas, prior: metrics.prior?.roas, footnote: "Primary account goal" },
     ];
   }
-  if (goalFamily === "lead_gen") {
+  if (reportGoal === "lead_gen") {
     return [
       { label: "Cost", value: fmtMoney(metrics.cost), now: metrics.cost, prior: metrics.prior?.cost, neutral: true },
       { label: "Hard conversions", value: fmtNum(split.find((item) => item.label === "Hard conversions")?.value || metrics.conversions), now: split.find((item) => item.label === "Hard conversions")?.value || metrics.conversions, prior: Math.round((metrics.prior?.conversions || 0) * 0.38) },
