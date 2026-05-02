@@ -593,8 +593,8 @@ export default function ReportView() {
     ? "Three priorities for next month, ordered by expected impact and grounded in the actual account data."
     : decision?.body || "Three priorities for next month, ordered by expected impact.";
   const recommendationItems = useLiveDerivedContent ? liveRecommendations : recs;
-  const heroMetrics = getHeroMetrics(reportGoal, displayMetrics, conversionSplit);
-  const winners = getCampaignWinners(spendCampaigns, reportGoal);
+  const heroMetrics = getHeroMetrics(goalFamily, displayMetrics, conversionSplit);
+  const winners = getCampaignWinners(spendCampaigns, goalFamily);
 
   return (
     <div className="report-theme min-h-screen overflow-x-hidden bg-background">
@@ -681,7 +681,7 @@ export default function ReportView() {
               title={goalFamily === "ecommerce" ? "Spend vs return" : goalFamily === "lead_gen" ? "Spend vs hard output" : "Spend vs demand"}
               body="A quick read on direction matters more than a paragraph of explanation here."
             >
-              <MiniTrendChart data={timeline} goal={reportGoal} />
+              <MiniTrendChart data={timeline} goal={goalFamily} />
             </ChartCard>
           </div>
         </section>
@@ -695,14 +695,14 @@ export default function ReportView() {
           </div>
           <div className="grid gap-4 md:grid-cols-[1.55fr_1fr]">
             <ChartCard label="Performance comparison" title="Campaign ladder">
-              <CampaignPerformanceChart campaigns={spendCampaigns} goal={reportGoal} />
+              <CampaignPerformanceChart campaigns={spendCampaigns} goal={goalFamily} />
             </ChartCard>
             <ChartCard label="Budget allocation" title="Spend share">
               <SpendShareChart campaigns={spendCampaigns} totalSpend={displayMetrics.cost} />
             </ChartCard>
           </div>
           <div className={`mt-4 grid gap-4 ${deviceSplit.length > 0 ? "md:grid-cols-[1.15fr_0.85fr]" : "md:grid-cols-1"}`}>
-            <WinnerCard title="Top winner" campaign={winners.best} goal={reportGoal} />
+            <WinnerCard title="Top winner" campaign={winners.best} goal={goalFamily} />
             {deviceSplit.length > 0 && (
               <ChartCard label="Audience split" title="Device split">
                 <DeviceSplitCard split={deviceSplit} />
@@ -965,7 +965,7 @@ function ChartCard({
   );
 }
 
-function MiniTrendChart({ data, goal }: { data: any[]; goal: ReportGoal }) {
+function MiniTrendChart({ data, goal }: { data: any[]; goal: ReportGoalFamily }) {
   const secondaryKey = goal === "ecommerce" ? "roas" : goal === "lead_gen" ? "conversions" : "clicks";
   const secondaryLabel = goal === "ecommerce" ? "ROAS" : goal === "lead_gen" ? "Conversions" : "Clicks";
   return (
@@ -988,7 +988,7 @@ function MiniTrendChart({ data, goal }: { data: any[]; goal: ReportGoal }) {
   );
 }
 
-function CampaignPerformanceChart({ campaigns, goal }: { campaigns: any[]; goal: ReportGoal }) {
+function CampaignPerformanceChart({ campaigns, goal }: { campaigns: any[]; goal: ReportGoalFamily }) {
   if (!campaigns.length) {
     return <p className="text-sm lynck-muted">No spend was recorded across campaigns for this period.</p>;
   }
@@ -1079,7 +1079,7 @@ function SpendShareChart({ campaigns, totalSpend }: { campaigns: any[]; totalSpe
   );
 }
 
-function WinnerCard({ title, campaign, goal, inverse = false }: { title: string; campaign?: any; goal: ReportGoal; inverse?: boolean }) {
+function WinnerCard({ title, campaign, goal, inverse = false }: { title: string; campaign?: any; goal: ReportGoalFamily; inverse?: boolean }) {
   if (!campaign) return null;
   return (
     <div className="lynck-card p-5">
@@ -1262,7 +1262,7 @@ function InsightNote({ label, body }: { label: string; body: string }) {
   );
 }
 
-function getHeroMetrics(reportGoal: ReportGoal, metrics: MetricsRow, split: any[]) {
+function getHeroMetrics(reportGoal: ReportGoalFamily, metrics: MetricsRow, split: any[]) {
   if (goalFamily === "ecommerce") {
     return [
       { label: "Cost", value: fmtMoney(metrics.cost), now: metrics.cost, prior: metrics.prior?.cost, neutral: true },
@@ -1287,7 +1287,7 @@ function getHeroMetrics(reportGoal: ReportGoal, metrics: MetricsRow, split: any[
   ];
 }
 
-function getCampaignWinners(campaigns: any[], goal: ReportGoal) {
+function getCampaignWinners(campaigns: any[], goal: ReportGoalFamily) {
   if (!campaigns?.length) return { best: undefined, weakest: undefined };
   const sorted = [...campaigns].sort((a, b) => {
     if (goal === "ecommerce") return (b.roas || 0) - (a.roas || 0);
