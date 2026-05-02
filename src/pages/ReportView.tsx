@@ -568,7 +568,8 @@ export default function ReportView() {
       if (goalFamily === "lead_gen") return (b.conversions || 0) - (a.conversions || 0);
       return (b.clicks || 0) - (a.clicks || 0);
     });
-  const topKeywords = aggregateKeywords(normalizeKeywords(asArray<any>(displayMetrics.top_search_terms ?? displayMetrics.top_keywords)))
+  const rawSearchTerms = asArray<any>(displayMetrics.top_search_terms);
+  const topKeywords = aggregateKeywords(normalizeKeywords(rawSearchTerms.length > 0 ? rawSearchTerms : asArray<any>(displayMetrics.top_keywords)))
     .filter((keyword) => Number(keyword.clicks || 0) > 0)
     .sort((a, b) => (b.clicks || 0) - (a.clicks || 0) || (b.conversions || 0) - (a.conversions || 0));
   const topProducts = aggregateProducts(normalizeProducts(asArray<any>(displayMetrics.top_products)))
