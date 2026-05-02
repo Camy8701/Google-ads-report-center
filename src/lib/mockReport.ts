@@ -135,6 +135,11 @@ export function generateMockReport({ businessType, reportGoal, periodMonth }: Ge
     { label: "Hard conversions", value: hardConversions, color: "#EC8A1D" },
     { label: "Soft conversions", value: softConversions, color: "#8FA9C7" },
   ];
+  const deviceSplit = [
+    { label: "Mobile", clicks: Math.round(clicks * 0.62), impressions: Math.round(impressions * 0.58), conversions: Math.round(conversions * 0.55), cost: Number((cost * 0.57).toFixed(2)) },
+    { label: "Desktop", clicks: Math.round(clicks * 0.28), impressions: Math.round(impressions * 0.31), conversions: Math.round(conversions * 0.33), cost: Number((cost * 0.32).toFixed(2)) },
+    { label: "Tablet", clicks: Math.max(0, clicks - Math.round(clicks * 0.62) - Math.round(clicks * 0.28)), impressions: Math.max(0, impressions - Math.round(impressions * 0.58) - Math.round(impressions * 0.31)), conversions: Math.max(0, conversions - Math.round(conversions * 0.55) - Math.round(conversions * 0.33)), cost: Number((cost - Number((cost * 0.57).toFixed(2)) - Number((cost * 0.32).toFixed(2))).toFixed(2)) },
+  ];
   const leadActions = isLeadGen
     ? [
         { label: "Form submits", value: Math.round(hardConversions * 0.56) },
@@ -253,6 +258,8 @@ export function generateMockReport({ businessType, reportGoal, periodMonth }: Ge
       roas,
       prior,
       top_campaigns: campaignData,
+      device_split: deviceSplit,
+      top_search_terms: topKeywords,
       top_keywords: topKeywords,
       top_products: topProducts,
     },

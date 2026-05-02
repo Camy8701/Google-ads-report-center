@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { fmtDate, fmtMonthShort } from "@/lib/format";
-import { ArrowLeft, Save, FileText, Mail, Building2 } from "lucide-react";
+import { ArrowLeft, Save, FileText, Mail, Building2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { getBusinessTypeLabel, getClientReportGoal, getReportGoalLabel, getVisibleBrandNotes, withReportGoalMeta, type ReportGoal } from "@/lib/reportGoal";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -21,6 +21,11 @@ export default function ClientDetail() {
   const [reports, setReports] = useState<any[]>([]);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<any>({});
+  const [syncMonth, setSyncMonth] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  });
+  const [syncingAccountId, setSyncingAccountId] = useState<string | null>(null);
 
   const load = async () => {
     if (!id) return;
@@ -47,6 +52,25 @@ export default function ClientDetail() {
     if (error) return toast.error(error.message);
     toast.success("Saved");
     setEditing(false); load();
+  };
+
+  const runSync = async (accountId: string) => {
+    setSyncingAccountId(accountId);
+    try {
+      const { data, error } = await supabase.functions.invoke("sync-google-ads", {
+        body: {
+          ad_account_id: accountId,
+          period_month: `${syncMonth}-01`,
+        },
+      });
+      if (error) throw error;
+      toast.success(`Google Ads sync finished${data?.synced_search_terms ? ` · ${data.synced_search_terms} search terms` : ""}`);
+      await load();
+    } catch (e: any) {
+      toast.error(e?.message || "Google Ads sync failed");
+    } finally {
+      setSyncingAccountId(null);
+    }
   };
 
   if (!client) return <PageContainer><div className="lynck-muted">Loading…</div></PageContainer>;
@@ -159,21 +183,31 @@ export default function ClientDetail() {
           </ul>
         </div>
         <div className="lynck-card p-5">
-          <div className="mb-3 flex items-center justify-between gap-3">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
             <p className="lynck-section-label inline-flex items-center gap-2"><Building2 className="size-3" /> Google Ads accounts</p>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={async () => {
-                const { error } = await supabase.from("ad_accounts").insert([{
-                  client_id: id, label: "Primary account", currency: "EUR", data_source_status: "mock",
-                }] as any);
-                if (error) return toast.error(error.message);
-                load();
-              }}
-            >
-              + Add
-            </Button>
+            <div className="flex items-center gap-2">
+              {accounts.length > 0 && (
+                <Input
+                  type="month"
+                  value={syncMonth}
+                  onChange={(e) => setSyncMonth(e.target.value)}
+                  className="h-9 w-[160px]"
+                />
+              )}
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={async () => {
+                  const { error } = await supabase.from("ad_accounts").insert([{
+                    client_id: id, label: "Primary account", currency: "EUR", data_source_status: "mock",
+                  }] as any);
+                  if (error) return toast.error(error.message);
+                  load();
+                }}
+              >
+                + Add
+              </Button>
+            </div>
           </div>
           {accounts.length === 0 && <p className="text-card-body lynck-muted">No accounts linked.</p>}
           <ul className="space-y-4">
@@ -209,6 +243,13 @@ export default function ClientDetail() {
                 <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.15em] lynck-muted">
                   <span>Status · {a.data_source_status}</span>
                   <span>{a.last_sync_at ? `Last sync · ${fmtDate(a.last_sync_at)}` : "Never synced"}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] uppercase tracking-[0.15em] lynck-muted">{a.data_source_status}</span>
+                  <Button size="sm" variant="outline" disabled={syncingAccountId === a.id} onClick={() => runSync(a.id)}>
+                    <RefreshCw className={`size-3.5 mr-1.5 ${syncingAccountId === a.id ? "animate-spin" : ""}`} />
+                    {syncingAccountId === a.id ? "Syncing…" : "Sync"}
+                  </Button>
                 </div>
               </li>
             ))}

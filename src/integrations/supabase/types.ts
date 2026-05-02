@@ -235,12 +235,14 @@ export type Database = {
           cpc: number
           created_at: string
           ctr: number
+          device_split: Json
           id: string
           impressions: number
           prior: Json
           report_id: string
           roas: number
           top_campaigns: Json
+          top_search_terms: Json
           top_keywords: Json
           top_products: Json
         }
@@ -254,12 +256,14 @@ export type Database = {
           cpc?: number
           created_at?: string
           ctr?: number
+          device_split?: Json
           id?: string
           impressions?: number
           prior?: Json
           report_id: string
           roas?: number
           top_campaigns?: Json
+          top_search_terms?: Json
           top_keywords?: Json
           top_products?: Json
         }
@@ -273,12 +277,14 @@ export type Database = {
           cpc?: number
           created_at?: string
           ctr?: number
+          device_split?: Json
           id?: string
           impressions?: number
           prior?: Json
           report_id?: string
           roas?: number
           top_campaigns?: Json
+          top_search_terms?: Json
           top_keywords?: Json
           top_products?: Json
         }
