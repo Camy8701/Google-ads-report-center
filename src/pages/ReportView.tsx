@@ -86,8 +86,8 @@ function normalizeCampaigns(campaigns: any[], reportGoal: ReportGoalFamily) {
     const spendShare = Number((((campaign.spend || 0) / totalSpend) * 100).toFixed(1));
     let status = campaign.status;
     if (!status) {
-      if (goalFamily === "ecommerce") status = campaign.roas >= 2.5 ? "winner" : campaign.roas > 0 ? "watch" : "weak";
-      else if (goalFamily === "lead_gen") status = campaign.conversions > 0 && campaign.cpa > 0 && campaign.cpa <= 60 ? "winner" : campaign.conversions > 0 ? "watch" : "weak";
+      if (reportGoal === "ecommerce") status = campaign.roas >= 2.5 ? "winner" : campaign.roas > 0 ? "watch" : "weak";
+      else if (reportGoal === "lead_gen") status = campaign.conversions > 0 && campaign.cpa > 0 && campaign.cpa <= 60 ? "winner" : campaign.conversions > 0 ? "watch" : "weak";
       else status = campaign.conversions > 0 ? "winner" : "watch";
     }
 
