@@ -250,7 +250,8 @@ function buildTimeline(reportMonth: string, metrics: MetricsRow, rawTimeline: an
 }
 
 function isImportedGoogleAdsShape(rawMetrics: MetricsRow) {
-  const topKeywords = asArray<any>(rawMetrics.top_search_terms ?? rawMetrics.top_keywords);
+  const rawST = asArray<any>(rawMetrics.top_search_terms);
+  const topKeywords = rawST.length > 0 ? rawST : asArray<any>(rawMetrics.top_keywords);
   const topProducts = asArray<any>(rawMetrics.top_products);
   const topCampaigns = asArray<any>(rawMetrics.top_campaigns);
   return topKeywords.some((item) => "text" in item) || topProducts.some((item) => "title" in item) || topCampaigns.some((item) => "cost" in item && !("spend" in item));
