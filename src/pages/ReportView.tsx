@@ -556,15 +556,16 @@ export default function ReportView() {
   const decision = sec("decision_page");
 
   const reportGoal = getClientReportGoal(client?.brand_notes, client?.business_type);
+  const goalFamily = getReportGoalFamily(reportGoal);
   const displayMetrics = normalizeMetricsForDisplay(metrics);
   const summaryData = summary?.data || {};
   const useLiveDerivedContent = isImportedGoogleAdsShape(metrics);
-  const topCampaigns = normalizeCampaigns(asArray<any>(displayMetrics.top_campaigns), reportGoal);
+  const topCampaigns = normalizeCampaigns(asArray<any>(displayMetrics.top_campaigns), goalFamily);
   const spendCampaigns = topCampaigns
     .filter((campaign) => Number(campaign.spend || 0) > 0)
     .sort((a, b) => {
-      if (reportGoal === "ecommerce") return (b.roas || 0) - (a.roas || 0);
-      if (reportGoal === "lead_gen") return (b.conversions || 0) - (a.conversions || 0);
+      if (goalFamily === "ecommerce") return (b.roas || 0) - (a.roas || 0);
+      if (goalFamily === "lead_gen") return (b.conversions || 0) - (a.conversions || 0);
       return (b.clicks || 0) - (a.clicks || 0);
     });
   const topKeywords = aggregateKeywords(normalizeKeywords(asArray<any>(displayMetrics.top_search_terms ?? displayMetrics.top_keywords)))
