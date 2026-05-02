@@ -6,7 +6,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { fmtMonth, fmtMonthShort, fmtNum, fmtMoney, fmtPct, fmtDate, delta } from "@/lib/format";
-import { getClientReportGoal, getReportGoalLabel, getVisibleBrandNotes, type ReportGoal } from "@/lib/reportGoal";
+import { getClientReportGoal, getReportGoalLabel, getReportGoalFamily, getVisibleBrandNotes, type ReportGoal, type ReportGoalFamily } from "@/lib/reportGoal";
 import { ArrowLeft, Save, Sparkles, Printer, CheckCircle2, FileDown, ArrowUp, ArrowDown, Minus } from "lucide-react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
@@ -70,7 +70,7 @@ const normalizePct = (value: unknown) => {
   return Math.abs(n) <= 1 ? n * 100 : n;
 };
 
-function normalizeCampaigns(campaigns: any[], reportGoal: ReportGoal) {
+function normalizeCampaigns(campaigns: any[], reportGoal: ReportGoalFamily) {
   const safeCampaigns = asArray<any>(campaigns).map((campaign) => ({
     ...campaign,
     spend: Number(campaign?.spend ?? campaign?.cost ?? 0),
@@ -86,8 +86,8 @@ function normalizeCampaigns(campaigns: any[], reportGoal: ReportGoal) {
     const spendShare = Number((((campaign.spend || 0) / totalSpend) * 100).toFixed(1));
     let status = campaign.status;
     if (!status) {
-      if (reportGoal === "ecommerce") status = campaign.roas >= 2.5 ? "winner" : campaign.roas > 0 ? "watch" : "weak";
-      else if (reportGoal === "lead_gen") status = campaign.conversions > 0 && campaign.cpa > 0 && campaign.cpa <= 60 ? "winner" : campaign.conversions > 0 ? "watch" : "weak";
+      if (goalFamily === "ecommerce") status = campaign.roas >= 2.5 ? "winner" : campaign.roas > 0 ? "watch" : "weak";
+      else if (goalFamily === "lead_gen") status = campaign.conversions > 0 && campaign.cpa > 0 && campaign.cpa <= 60 ? "winner" : campaign.conversions > 0 ? "watch" : "weak";
       else status = campaign.conversions > 0 ? "winner" : "watch";
     }
 
@@ -256,9 +256,9 @@ function isImportedGoogleAdsShape(rawMetrics: MetricsRow) {
   return topKeywords.some((item) => "text" in item) || topProducts.some((item) => "title" in item) || topCampaigns.some((item) => "cost" in item && !("spend" in item));
 }
 
-function buildLiveSummary(reportGoal: ReportGoal, metrics: MetricsRow, topCampaigns: any[]) {
+function buildLiveSummary(reportGoal: ReportGoalFamily, metrics: MetricsRow, topCampaigns: any[]) {
   const bestCampaign = topCampaigns[0];
-  if (reportGoal === "ecommerce") {
+  if (goalFamily === "ecommerce") {
     return {
       body: `I have prepared the monthly readout using the actual account data for this period. Spend landed at ${fmtMoney(metrics.cost)} and produced ${fmtMoney(metrics.conversion_value)} in tracked value, keeping ROAS at ${metrics.roas.toFixed(2)}x. ${bestCampaign ? `${bestCampaign.name} was the strongest efficiency driver in the account.` : "This month should be read through return, not just volume."}`,
       takeaways: [
@@ -268,7 +268,7 @@ function buildLiveSummary(reportGoal: ReportGoal, metrics: MetricsRow, topCampai
       ],
     };
   }
-  if (reportGoal === "lead_gen") {
+  if (goalFamily === "lead_gen") {
     return {
       body: `I have prepared the monthly readout using the actual account data for this period. Spend landed at ${fmtMoney(metrics.cost)} and drove ${fmtNum(metrics.conversions)} tracked conversions at ${fmtMoney(metrics.cpa)} CPA. ${bestCampaign ? `${bestCampaign.name} was the strongest lead source in the account.` : "The account should be judged on hard output first."}`,
       takeaways: [
@@ -288,15 +288,15 @@ function buildLiveSummary(reportGoal: ReportGoal, metrics: MetricsRow, topCampai
   };
 }
 
-function buildLiveWhatChanged(reportGoal: ReportGoal, metrics: MetricsRow) {
+function buildLiveWhatChanged(reportGoal: ReportGoalFamily, metrics: MetricsRow) {
   const costDelta = delta(metrics.cost, metrics.prior?.cost || 0);
   const cpcDelta = delta(metrics.cpc, metrics.prior?.cpc || 0);
   const convRateDelta = delta(metrics.conversion_rate, metrics.prior?.conversion_rate || 0);
   const roasDelta = delta(metrics.roas, metrics.prior?.roas || 0);
 
-  const primaryDriver = reportGoal === "ecommerce"
+  const primaryDriver = goalFamily === "ecommerce"
     ? `spend ${costDelta.dir === "down" ? "pulled back" : costDelta.dir === "up" ? "scaled up" : "held broadly flat"} while return efficiency ${roasDelta.dir === "up" ? "improved" : roasDelta.dir === "down" ? "softened" : "held roughly flat"}`
-    : reportGoal === "lead_gen"
+    : goalFamily === "lead_gen"
       ? `lead volume ${delta(metrics.conversions, metrics.prior?.conversions || 0).dir === "up" ? "improved" : "softened"} while CPA ${delta(metrics.cpa, metrics.prior?.cpa || 0).dir === "down" ? "became more efficient" : "came under pressure"}`
       : `traffic volume ${delta(metrics.clicks, metrics.prior?.clicks || 0).dir === "up" ? "expanded" : "contracted"} while CPC ${cpcDelta.dir === "down" ? "eased" : cpcDelta.dir === "up" ? "rose" : "held flat"}`;
 
@@ -310,20 +310,20 @@ function buildLiveWhatChanged(reportGoal: ReportGoal, metrics: MetricsRow) {
   };
 }
 
-function buildLiveOpportunities(reportGoal: ReportGoal, topCampaigns: any[], topKeywords: any[]) {
+function buildLiveOpportunities(reportGoal: ReportGoalFamily, topCampaigns: any[], topKeywords: any[]) {
   const weakCampaign = [...topCampaigns].reverse().find((item) => (item.spend || 0) > 0);
   const strongestKeyword = topKeywords[0];
-  if (reportGoal === "ecommerce") {
+  if (goalFamily === "ecommerce") {
     return `The clearest upside is to shift more weight toward the campaigns and search themes already converting, while reducing exposure in campaigns still spending without return. ${strongestKeyword ? `${strongestKeyword.term} is one of the strongest proven demand signals in the account.` : ""}`.trim();
   }
-  if (reportGoal === "lead_gen") {
+  if (goalFamily === "lead_gen") {
     return `The clearest upside is to weight budget toward the campaigns already producing conversions efficiently, while trimming broader coverage that consumes spend without enough hard output. ${weakCampaign ? `${weakCampaign.name} is the first area to review.` : ""}`.trim();
   }
   return `The clearest upside is to keep the strongest demand themes live while cutting placements and campaign pockets that add spend without enough downstream response. ${weakCampaign ? `${weakCampaign.name} is the first area to review.` : ""}`.trim();
 }
 
-function buildLiveRecommendations(reportGoal: ReportGoal, topCampaigns: any[], topKeywords: any[], topProducts: any[]) {
-  const sortedCampaigns = [...topCampaigns].sort((a, b) => (reportGoal === "ecommerce" ? (b.roas || 0) - (a.roas || 0) : (b.conversions || 0) - (a.conversions || 0)));
+function buildLiveRecommendations(reportGoal: ReportGoalFamily, topCampaigns: any[], topKeywords: any[], topProducts: any[]) {
+  const sortedCampaigns = [...topCampaigns].sort((a, b) => (goalFamily === "ecommerce" ? (b.roas || 0) - (a.roas || 0) : (b.conversions || 0) - (a.conversions || 0)));
   const bestCampaign = sortedCampaigns[0];
   const weakestCampaign = [...sortedCampaigns].reverse().find((item) => (item.spend || 0) > 0) || sortedCampaigns[sortedCampaigns.length - 1];
   const bestKeyword = topKeywords[0];
@@ -335,7 +335,7 @@ function buildLiveRecommendations(reportGoal: ReportGoal, topCampaigns: any[], t
       position: 1,
       title: bestCampaign ? `Weight more spend toward ${bestCampaign.name}` : "Weight more spend toward the strongest campaign",
       why: bestCampaign ? `${bestCampaign.name} is currently doing the best efficiency work in the account.` : "A small part of the account is carrying most of the performance.",
-      expected_impact: reportGoal === "ecommerce" ? "Protect return while scaling qualified revenue." : "Improve output without raising blended cost too quickly.",
+      expected_impact: goalFamily === "ecommerce" ? "Protect return while scaling qualified revenue." : "Improve output without raising blended cost too quickly.",
       urgency: "medium",
     },
     {
@@ -349,10 +349,10 @@ function buildLiveRecommendations(reportGoal: ReportGoal, topCampaigns: any[], t
     {
       id: "live-rec-3",
       position: 3,
-      title: reportGoal === "ecommerce"
+      title: goalFamily === "ecommerce"
         ? `Expand around ${bestProduct?.name || bestKeyword?.term || "the strongest product/query set"}`
         : `Expand around ${bestKeyword?.term || "the strongest search themes"}`,
-      why: reportGoal === "ecommerce"
+      why: goalFamily === "ecommerce"
         ? "The strongest product and search demand pockets are already proving where intent sits."
         : "The best converting search themes are the cleanest expansion path.",
       expected_impact: "Improve concentration around proven demand instead of scaling broadly.",
@@ -556,15 +556,16 @@ export default function ReportView() {
   const decision = sec("decision_page");
 
   const reportGoal = getClientReportGoal(client?.brand_notes, client?.business_type);
+  const goalFamily = getReportGoalFamily(reportGoal);
   const displayMetrics = normalizeMetricsForDisplay(metrics);
   const summaryData = summary?.data || {};
   const useLiveDerivedContent = isImportedGoogleAdsShape(metrics);
-  const topCampaigns = normalizeCampaigns(asArray<any>(displayMetrics.top_campaigns), reportGoal);
+  const topCampaigns = normalizeCampaigns(asArray<any>(displayMetrics.top_campaigns), goalFamily);
   const spendCampaigns = topCampaigns
     .filter((campaign) => Number(campaign.spend || 0) > 0)
     .sort((a, b) => {
-      if (reportGoal === "ecommerce") return (b.roas || 0) - (a.roas || 0);
-      if (reportGoal === "lead_gen") return (b.conversions || 0) - (a.conversions || 0);
+      if (goalFamily === "ecommerce") return (b.roas || 0) - (a.roas || 0);
+      if (goalFamily === "lead_gen") return (b.conversions || 0) - (a.conversions || 0);
       return (b.clicks || 0) - (a.clicks || 0);
     });
   const topKeywords = aggregateKeywords(normalizeKeywords(asArray<any>(displayMetrics.top_search_terms ?? displayMetrics.top_keywords)))
@@ -573,10 +574,10 @@ export default function ReportView() {
   const topProducts = aggregateProducts(normalizeProducts(asArray<any>(displayMetrics.top_products)))
     .sort((a, b) => (b.clicks || 0) - (a.clicks || 0) || (b.conversions || 0) - (a.conversions || 0));
   const deviceSplit = buildDeviceSplit(displayMetrics);
-  const liveSummary = useLiveDerivedContent ? buildLiveSummary(reportGoal, displayMetrics, spendCampaigns) : null;
-  const liveWhatChanged = useLiveDerivedContent ? buildLiveWhatChanged(reportGoal, displayMetrics) : null;
-  const liveOpportunities = useLiveDerivedContent ? buildLiveOpportunities(reportGoal, spendCampaigns, topKeywords) : null;
-  const liveRecommendations = useLiveDerivedContent ? buildLiveRecommendations(reportGoal, spendCampaigns, topKeywords, topProducts) : [];
+  const liveSummary = useLiveDerivedContent ? buildLiveSummary(goalFamily, displayMetrics, spendCampaigns) : null;
+  const liveWhatChanged = useLiveDerivedContent ? buildLiveWhatChanged(goalFamily, displayMetrics) : null;
+  const liveOpportunities = useLiveDerivedContent ? buildLiveOpportunities(goalFamily, spendCampaigns, topKeywords) : null;
+  const liveRecommendations = useLiveDerivedContent ? buildLiveRecommendations(goalFamily, spendCampaigns, topKeywords, topProducts) : [];
   const summaryBody = useLiveDerivedContent ? liveSummary?.body || summary?.body || "" : summary?.body || "";
   const takeaways: string[] = useLiveDerivedContent
     ? asArray<string>(liveSummary?.takeaways)
@@ -592,8 +593,8 @@ export default function ReportView() {
     ? "Three priorities for next month, ordered by expected impact and grounded in the actual account data."
     : decision?.body || "Three priorities for next month, ordered by expected impact.";
   const recommendationItems = useLiveDerivedContent ? liveRecommendations : recs;
-  const heroMetrics = getHeroMetrics(reportGoal, displayMetrics, conversionSplit);
-  const winners = getCampaignWinners(spendCampaigns, reportGoal);
+  const heroMetrics = getHeroMetrics(goalFamily, displayMetrics, conversionSplit);
+  const winners = getCampaignWinners(spendCampaigns, goalFamily);
 
   return (
     <div className="report-theme min-h-screen overflow-x-hidden bg-background">
@@ -677,10 +678,10 @@ export default function ReportView() {
           <div className="mt-6">
             <ChartCard
               label="Six-month trend"
-              title={reportGoal === "ecommerce" ? "Spend vs return" : reportGoal === "lead_gen" ? "Spend vs hard output" : "Spend vs demand"}
+              title={goalFamily === "ecommerce" ? "Spend vs return" : goalFamily === "lead_gen" ? "Spend vs hard output" : "Spend vs demand"}
               body="A quick read on direction matters more than a paragraph of explanation here."
             >
-              <MiniTrendChart data={timeline} goal={reportGoal} />
+              <MiniTrendChart data={timeline} goal={goalFamily} />
             </ChartCard>
           </div>
         </section>
@@ -694,14 +695,14 @@ export default function ReportView() {
           </div>
           <div className="grid gap-4 md:grid-cols-[1.55fr_1fr]">
             <ChartCard label="Performance comparison" title="Campaign ladder">
-              <CampaignPerformanceChart campaigns={spendCampaigns} goal={reportGoal} />
+              <CampaignPerformanceChart campaigns={spendCampaigns} goal={goalFamily} />
             </ChartCard>
             <ChartCard label="Budget allocation" title="Spend share">
               <SpendShareChart campaigns={spendCampaigns} totalSpend={displayMetrics.cost} />
             </ChartCard>
           </div>
           <div className={`mt-4 grid gap-4 ${deviceSplit.length > 0 ? "md:grid-cols-[1.15fr_0.85fr]" : "md:grid-cols-1"}`}>
-            <WinnerCard title="Top winner" campaign={winners.best} goal={reportGoal} />
+            <WinnerCard title="Top winner" campaign={winners.best} goal={goalFamily} />
             {deviceSplit.length > 0 && (
               <ChartCard label="Audience split" title="Device split">
                 <DeviceSplitCard split={deviceSplit} />
@@ -735,13 +736,13 @@ export default function ReportView() {
                   conversions: keyword.conversions,
                   avgCpc: keyword.clicks > 0 ? keyword.cost / keyword.clicks : 0,
                 }))}
-                emptyLabel="No keyword performance available yet."
+                emptyLabel="No search term data available yet."
                 nameColumnRatio={2.2}
               />
             </ChartCard>
           </div>
 
-          {reportGoal === "ecommerce" ? (
+          {goalFamily === "ecommerce" ? (
             <div className="mt-4">
               <ChartCard label="Product insight" title="Top 10 products">
                 <TopItemsList
@@ -756,7 +757,7 @@ export default function ReportView() {
                 />
               </ChartCard>
             </div>
-          ) : reportGoal === "lead_gen" ? (
+          ) : goalFamily === "lead_gen" ? (
             <div className="mt-4">
               <ChartCard label="Lead insight" title="Hard vs soft conversions">
                 <LeadInsightPanel split={conversionSplit} actions={leadActions} />
@@ -964,7 +965,7 @@ function ChartCard({
   );
 }
 
-function MiniTrendChart({ data, goal }: { data: any[]; goal: ReportGoal }) {
+function MiniTrendChart({ data, goal }: { data: any[]; goal: ReportGoalFamily }) {
   const secondaryKey = goal === "ecommerce" ? "roas" : goal === "lead_gen" ? "conversions" : "clicks";
   const secondaryLabel = goal === "ecommerce" ? "ROAS" : goal === "lead_gen" ? "Conversions" : "Clicks";
   return (
@@ -987,7 +988,7 @@ function MiniTrendChart({ data, goal }: { data: any[]; goal: ReportGoal }) {
   );
 }
 
-function CampaignPerformanceChart({ campaigns, goal }: { campaigns: any[]; goal: ReportGoal }) {
+function CampaignPerformanceChart({ campaigns, goal }: { campaigns: any[]; goal: ReportGoalFamily }) {
   if (!campaigns.length) {
     return <p className="text-sm lynck-muted">No spend was recorded across campaigns for this period.</p>;
   }
@@ -1078,7 +1079,7 @@ function SpendShareChart({ campaigns, totalSpend }: { campaigns: any[]; totalSpe
   );
 }
 
-function WinnerCard({ title, campaign, goal, inverse = false }: { title: string; campaign?: any; goal: ReportGoal; inverse?: boolean }) {
+function WinnerCard({ title, campaign, goal, inverse = false }: { title: string; campaign?: any; goal: ReportGoalFamily; inverse?: boolean }) {
   if (!campaign) return null;
   return (
     <div className="lynck-card p-5">
@@ -1261,8 +1262,8 @@ function InsightNote({ label, body }: { label: string; body: string }) {
   );
 }
 
-function getHeroMetrics(reportGoal: ReportGoal, metrics: MetricsRow, split: any[]) {
-  if (reportGoal === "ecommerce") {
+function getHeroMetrics(reportGoal: ReportGoalFamily, metrics: MetricsRow, split: any[]) {
+  if (goalFamily === "ecommerce") {
     return [
       { label: "Cost", value: fmtMoney(metrics.cost), now: metrics.cost, prior: metrics.prior?.cost, neutral: true },
       { label: "Conversions", value: fmtNum(metrics.conversions), now: metrics.conversions, prior: metrics.prior?.conversions },
@@ -1270,7 +1271,7 @@ function getHeroMetrics(reportGoal: ReportGoal, metrics: MetricsRow, split: any[
       { label: "ROAS", value: `${metrics.roas.toFixed(2)}x`, now: metrics.roas, prior: metrics.prior?.roas, footnote: "Primary account goal" },
     ];
   }
-  if (reportGoal === "lead_gen") {
+  if (goalFamily === "lead_gen") {
     return [
       { label: "Cost", value: fmtMoney(metrics.cost), now: metrics.cost, prior: metrics.prior?.cost, neutral: true },
       { label: "Hard conversions", value: fmtNum(split.find((item) => item.label === "Hard conversions")?.value || metrics.conversions), now: split.find((item) => item.label === "Hard conversions")?.value || metrics.conversions, prior: Math.round((metrics.prior?.conversions || 0) * 0.38) },
@@ -1286,7 +1287,7 @@ function getHeroMetrics(reportGoal: ReportGoal, metrics: MetricsRow, split: any[
   ];
 }
 
-function getCampaignWinners(campaigns: any[], goal: ReportGoal) {
+function getCampaignWinners(campaigns: any[], goal: ReportGoalFamily) {
   if (!campaigns?.length) return { best: undefined, weakest: undefined };
   const sorted = [...campaigns].sort((a, b) => {
     if (goal === "ecommerce") return (b.roas || 0) - (a.roas || 0);
