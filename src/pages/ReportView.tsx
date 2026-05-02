@@ -736,7 +736,7 @@ export default function ReportView() {
                   conversions: keyword.conversions,
                   avgCpc: keyword.clicks > 0 ? keyword.cost / keyword.clicks : 0,
                 }))}
-                emptyLabel="No keyword performance available yet."
+                emptyLabel="No search term data available yet."
                 nameColumnRatio={2.2}
               />
             </ChartCard>
