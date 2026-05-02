@@ -6,7 +6,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { fmtMonth, fmtMonthShort, fmtNum, fmtMoney, fmtPct, fmtDate, delta } from "@/lib/format";
-import { getClientReportGoal, getReportGoalLabel, getVisibleBrandNotes, type ReportGoal } from "@/lib/reportGoal";
+import { getClientReportGoal, getReportGoalLabel, getReportGoalFamily, getVisibleBrandNotes, type ReportGoal, type ReportGoalFamily } from "@/lib/reportGoal";
 import { ArrowLeft, Save, Sparkles, Printer, CheckCircle2, FileDown, ArrowUp, ArrowDown, Minus } from "lucide-react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
