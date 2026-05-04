@@ -639,6 +639,9 @@ export default function ReportView() {
                 <CheckCircle2 className="size-4 mr-1.5" /> Approve
               </Button>
             )}
+            <Button size="sm" variant="outline" disabled={resyncing} onClick={resyncSearchTerms}>
+              <RefreshCw className={`size-4 mr-1.5 ${resyncing ? "animate-spin" : ""}`} /> {resyncing ? "Syncing…" : "Re-sync search terms"}
+            </Button>
             <Button size="sm" variant="outline" onClick={() => window.print()}>
               <Printer className="size-4 mr-1.5" /> Print
             </Button>
