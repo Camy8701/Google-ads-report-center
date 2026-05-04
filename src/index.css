@@ -235,9 +235,9 @@
     overflow: hidden;
     min-height: 100svh;
     background:
-      linear-gradient(90deg, rgba(11, 11, 10, 0.82) 0%, rgba(11, 11, 10, 0.42) 50%, rgba(11, 11, 10, 0.78) 100%),
-      linear-gradient(180deg, rgba(11, 11, 10, 0.1) 0%, rgba(11, 11, 10, 0.7) 100%),
-      url("https://images.unsplash.com/photo-1511818966892-d7d671e672a2?auto=format&fit=crop&w=1800&q=80") center/cover no-repeat;
+      linear-gradient(90deg, rgba(11, 11, 10, 0.78) 0%, rgba(11, 11, 10, 0.38) 50%, rgba(11, 11, 10, 0.74) 100%),
+      linear-gradient(180deg, rgba(11, 11, 10, 0.08) 0%, rgba(11, 11, 10, 0.68) 100%),
+      url("/dashboard-hero.jpg") center top/cover no-repeat;
   }
 
   .crm-hero-scene::before {

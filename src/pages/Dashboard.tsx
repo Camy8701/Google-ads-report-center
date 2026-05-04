@@ -59,8 +59,8 @@ export default function Dashboard() {
 
   return (
     <>
-      <section className="crm-hero-scene relative left-1/2 right-1/2 mb-10 w-screen -translate-x-1/2">
-        <div className="mx-auto flex min-h-[100svh] max-w-[1320px] flex-col justify-between px-6 pb-8 pt-28 md:px-8 md:pb-10 md:pt-32">
+      <section className="crm-hero-scene relative left-1/2 right-1/2 mb-10 -mt-28 w-screen -translate-x-1/2 md:-mt-32">
+        <div className="mx-auto flex min-h-[100svh] max-w-[1320px] flex-col justify-between px-6 pb-8 pt-40 md:px-8 md:pb-10 md:pt-44">
           <div className="crm-hero-content pt-3 md:pt-6">
             <div className="crm-eyebrow-pill lynck-section-label mb-5 inline-flex rounded-full px-3 py-1.5">
               Internal reporting system
