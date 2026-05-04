@@ -282,7 +282,61 @@ function buildDeviceSplitQuery(startDate: string, endDate: string) {
   `.trim();
 }
 
-async function googleAdsSearchStream({
+function buildProductPerformanceQuery(startDate: string, endDate: string) {
+  return `
+    SELECT
+      shopping_performance_view.resource_name,
+      segments.product_item_id,
+      segments.product_title,
+      metrics.impressions,
+      metrics.clicks,
+      metrics.conversions,
+      metrics.conversions_value,
+      metrics.cost_micros
+    FROM shopping_performance_view
+    WHERE segments.date BETWEEN '${startDate}' AND '${endDate}'
+      AND metrics.impressions > 0
+    ORDER BY metrics.clicks DESC
+    LIMIT ${PRODUCT_LIMIT * 2}
+  `.trim();
+}
+
+function normalizeProductRows(rows: Json[]): ProductMetric[] {
+  return rows.map((row) => ({
+    id: getString(row, ["segments", "productItemId"]) || getString(row, ["segments", "product_item_id"]) || "",
+    title: getString(row, ["segments", "productTitle"]) || getString(row, ["segments", "product_title"]) || "",
+    clicks: getNumber(row, ["metrics", "clicks"]),
+    impressions: getNumber(row, ["metrics", "impressions"]),
+    conversions: getNumber(row, ["metrics", "conversions"]),
+    cost: getNumber(row, ["metrics", "costMicros"]) / 1_000_000,
+    conversion_value: getNumber(row, ["metrics", "conversionsValue"]),
+  })).filter((row) => row.id || row.title);
+}
+
+function mergeProductRows(rows: ProductMetric[]): ProductMetric[] {
+  const grouped = new Map<string, ProductMetric>();
+
+  for (const row of rows) {
+    const key = (row.id || row.title).toLowerCase();
+    const existing = grouped.get(key);
+    if (!existing) {
+      grouped.set(key, { ...row });
+      continue;
+    }
+
+    existing.clicks += row.clicks;
+    existing.impressions += row.impressions;
+    existing.conversions += row.conversions;
+    existing.cost += row.cost;
+    existing.conversion_value += row.conversion_value;
+    // Keep the longer title
+    if (row.title.length > existing.title.length) existing.title = row.title;
+  }
+
+  return Array.from(grouped.values())
+    .sort((a, b) => b.clicks - a.clicks || b.conversions - a.conversions || b.impressions - a.impressions);
+}
+
   accessToken,
   developerToken,
   loginCustomerId,
