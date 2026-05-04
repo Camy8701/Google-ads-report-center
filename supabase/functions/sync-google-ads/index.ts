@@ -130,6 +130,7 @@ serve(async (req) => {
       ...normalizeSearchTermRows(pmaxRows, "campaign_search_term_view"),
     ]).slice(0, 25);
     const deviceSplit = mergeDeviceRows(normalizeDeviceRows(deviceRows)).slice(0, 10);
+    const topProducts = mergeProductRows(normalizeProductRows(productRows)).slice(0, PRODUCT_LIMIT);
 
     const report = await ensureReport({
       adAccountId: adAccount.id,
@@ -143,6 +144,7 @@ serve(async (req) => {
       device_split: deviceSplit,
       top_search_terms: topSearchTerms,
       top_keywords: topSearchTerms,
+      top_products: topProducts,
     }, { onConflict: "report_id" });
     if (metricsError) throw new Error(metricsError.message);
 
