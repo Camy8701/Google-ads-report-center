@@ -372,6 +372,7 @@ export default function ReportView() {
   const [editing, setEditing] = useState<Record<string, string>>({});
   const [regenerating, setRegenerating] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [resyncing, setResyncing] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
 
   const exportPdf = async () => {
