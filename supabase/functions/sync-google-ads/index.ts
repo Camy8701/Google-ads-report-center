@@ -136,7 +136,7 @@ serve(async (req) => {
       ad_account_id,
       period_month,
       synced_search_terms: topSearchTerms.length,
-      device_split,
+      device_split: deviceSplit,
       top_search_terms: topSearchTerms.slice(0, 10),
       note: "Unified search terms were pulled from search_term_view (Search/Shopping) and campaign_search_term_view (Performance Max), then merged at account level.",
     });
