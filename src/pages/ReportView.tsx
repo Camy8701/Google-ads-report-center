@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { fmtMonth, fmtMonthShort, fmtNum, fmtMoney, fmtPct, fmtDate, delta } from "@/lib/format";
 import { getClientReportGoal, getReportGoalLabel, getReportGoalFamily, getVisibleBrandNotes, type ReportGoal, type ReportGoalFamily } from "@/lib/reportGoal";
-import { ArrowLeft, Save, Sparkles, Printer, CheckCircle2, FileDown, ArrowUp, ArrowDown, Minus } from "lucide-react";
+import { ArrowLeft, Save, Sparkles, Printer, CheckCircle2, FileDown, ArrowUp, ArrowDown, Minus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -372,6 +372,7 @@ export default function ReportView() {
   const [editing, setEditing] = useState<Record<string, string>>({});
   const [regenerating, setRegenerating] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [resyncing, setResyncing] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
 
   const exportPdf = async () => {
@@ -462,6 +463,29 @@ export default function ReportView() {
     } finally {
       reportRef.current?.removeAttribute("data-exporting-pdf");
       setExporting(false);
+    }
+  };
+
+  const resyncSearchTerms = async () => {
+    if (!report?.ad_account_id) {
+      toast.error("No ad account linked to this report.");
+      return;
+    }
+    setResyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("sync-google-ads", {
+        body: {
+          ad_account_id: report.ad_account_id,
+          period_month: report.period_month,
+        },
+      });
+      if (error) throw error;
+      toast.success(`Search terms re-synced${data?.synced_search_terms ? ` · ${data.synced_search_terms} terms` : ""}`);
+      await load();
+    } catch (e: any) {
+      toast.error("Re-sync failed: " + (e?.message || "unknown"));
+    } finally {
+      setResyncing(false);
     }
   };
 
@@ -615,6 +639,9 @@ export default function ReportView() {
                 <CheckCircle2 className="size-4 mr-1.5" /> Approve
               </Button>
             )}
+            <Button size="sm" variant="outline" disabled={resyncing} onClick={resyncSearchTerms}>
+              <RefreshCw className={`size-4 mr-1.5 ${resyncing ? "animate-spin" : ""}`} /> {resyncing ? "Syncing…" : "Re-sync search terms"}
+            </Button>
             <Button size="sm" variant="outline" onClick={() => window.print()}>
               <Printer className="size-4 mr-1.5" /> Print
             </Button>
