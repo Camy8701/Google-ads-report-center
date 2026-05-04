@@ -466,6 +466,29 @@ export default function ReportView() {
     }
   };
 
+  const resyncSearchTerms = async () => {
+    if (!report?.ad_account_id) {
+      toast.error("No ad account linked to this report.");
+      return;
+    }
+    setResyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("sync-google-ads", {
+        body: {
+          ad_account_id: report.ad_account_id,
+          period_month: report.period_month,
+        },
+      });
+      if (error) throw error;
+      toast.success(`Search terms re-synced${data?.synced_search_terms ? ` · ${data.synced_search_terms} terms` : ""}`);
+      await load();
+    } catch (e: any) {
+      toast.error("Re-sync failed: " + (e?.message || "unknown"));
+    } finally {
+      setResyncing(false);
+    }
+  };
+
   const load = async () => {
     if (!id) return;
     const { data: r } = await supabase.from("reports").select("*, clients(*)").eq("id", id).single();
