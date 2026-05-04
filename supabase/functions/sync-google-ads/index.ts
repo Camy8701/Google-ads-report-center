@@ -8,6 +8,7 @@ const corsHeaders = {
 
 const GOOGLE_ADS_API_VERSION = "v22";
 const SEARCH_TERM_LIMIT = 100;
+const PRODUCT_LIMIT = 50;
 
 type Json = Record<string, unknown>;
 
