@@ -66,8 +66,8 @@ serve(async (req) => {
     if (clientError || !client) throw new Error(clientError?.message || "Client not found");
     if (settingsError || !settings) throw new Error(settingsError?.message || "Global app settings not found");
 
-    const developerToken = sanitizeToken(settings.google_ads_developer_token);
-    const loginCustomerId = sanitizeId(adAccount.google_ads_manager_id || settings.google_ads_login_customer_id);
+    const developerToken = sanitizeToken(settings.google_ads_developer_token) || sanitizeToken(Deno.env.get("GOOGLE_ADS_DEVELOPER_TOKEN"));
+    const loginCustomerId = sanitizeId(adAccount.google_ads_manager_id || settings.google_ads_login_customer_id || Deno.env.get("GOOGLE_ADS_LOGIN_CUSTOMER_ID"));
     const customerId = sanitizeId(adAccount.google_ads_customer_id);
 
     if (!developerToken) throw new Error("google_ads_developer_token is missing in app settings");
