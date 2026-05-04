@@ -38,6 +38,16 @@ type DeviceMetric = {
   conversion_value: number;
 };
 
+type ProductMetric = {
+  id: string;
+  title: string;
+  clicks: number;
+  impressions: number;
+  conversions: number;
+  cost: number;
+  conversion_value: number;
+};
+
 const supabaseAdmin = createClient(
   Deno.env.get("SUPABASE_URL") ?? "",
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
