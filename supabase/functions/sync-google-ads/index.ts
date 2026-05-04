@@ -339,6 +339,7 @@ function mergeProductRows(rows: ProductMetric[]): ProductMetric[] {
     .sort((a, b) => b.clicks - a.clicks || b.conversions - a.conversions || b.impressions - a.impressions);
 }
 
+async function googleAdsSearchStream({
   accessToken,
   developerToken,
   loginCustomerId,
