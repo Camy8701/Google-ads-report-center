@@ -8,6 +8,7 @@ const corsHeaders = {
 
 const GOOGLE_ADS_API_VERSION = "v22";
 const SEARCH_TERM_LIMIT = 100;
+const PRODUCT_LIMIT = 50;
 
 type Json = Record<string, unknown>;
 
@@ -30,6 +31,16 @@ type SearchTermMetric = {
 
 type DeviceMetric = {
   label: string;
+  clicks: number;
+  impressions: number;
+  conversions: number;
+  cost: number;
+  conversion_value: number;
+};
+
+type ProductMetric = {
+  id: string;
+  title: string;
   clicks: number;
   impressions: number;
   conversions: number;
@@ -83,7 +94,7 @@ serve(async (req) => {
     const accessToken = await createServiceAccountAccessToken(serviceAccount);
     const { startDate, endDate } = getMonthRange(period_month);
 
-    const [searchRows, pmaxRows, deviceRows] = await Promise.all([
+    const [searchRows, pmaxRows, deviceRows, productRows] = await Promise.all([
       googleAdsSearchStream({
         accessToken,
         developerToken,
@@ -105,6 +116,13 @@ serve(async (req) => {
         customerId,
         query: buildDeviceSplitQuery(startDate, endDate),
       }),
+      googleAdsSearchStream({
+        accessToken,
+        developerToken,
+        loginCustomerId,
+        customerId,
+        query: buildProductPerformanceQuery(startDate, endDate),
+      }),
     ]);
 
     const topSearchTerms = mergeSearchTerms([
@@ -112,6 +130,7 @@ serve(async (req) => {
       ...normalizeSearchTermRows(pmaxRows, "campaign_search_term_view"),
     ]).slice(0, 25);
     const deviceSplit = mergeDeviceRows(normalizeDeviceRows(deviceRows)).slice(0, 10);
+    const topProducts = mergeProductRows(normalizeProductRows(productRows)).slice(0, PRODUCT_LIMIT);
 
     const report = await ensureReport({
       adAccountId: adAccount.id,
@@ -125,6 +144,7 @@ serve(async (req) => {
       device_split: deviceSplit,
       top_search_terms: topSearchTerms,
       top_keywords: topSearchTerms,
+      top_products: topProducts,
     }, { onConflict: "report_id" });
     if (metricsError) throw new Error(metricsError.message);
 
@@ -136,9 +156,11 @@ serve(async (req) => {
       ad_account_id,
       period_month,
       synced_search_terms: topSearchTerms.length,
+      synced_products: topProducts.length,
       device_split: deviceSplit,
       top_search_terms: topSearchTerms.slice(0, 10),
-      note: "Unified search terms were pulled from search_term_view (Search/Shopping) and campaign_search_term_view (Performance Max), then merged at account level.",
+      top_products: topProducts.slice(0, 10),
+      note: "Synced search terms, device split, and product performance from Google Ads.",
     });
   } catch (e) {
     console.error(e);
@@ -260,6 +282,61 @@ function buildDeviceSplitQuery(startDate: string, endDate: string) {
       AND metrics.impressions > 0
     ORDER BY metrics.clicks DESC
   `.trim();
+}
+
+function buildProductPerformanceQuery(startDate: string, endDate: string) {
+  return `
+    SELECT
+      shopping_performance_view.resource_name,
+      segments.product_item_id,
+      segments.product_title,
+      metrics.impressions,
+      metrics.clicks,
+      metrics.conversions,
+      metrics.conversions_value,
+      metrics.cost_micros
+    FROM shopping_performance_view
+    WHERE segments.date BETWEEN '${startDate}' AND '${endDate}'
+      AND metrics.impressions > 0
+    ORDER BY metrics.clicks DESC
+    LIMIT ${PRODUCT_LIMIT * 2}
+  `.trim();
+}
+
+function normalizeProductRows(rows: Json[]): ProductMetric[] {
+  return rows.map((row) => ({
+    id: getString(row, ["segments", "productItemId"]) || getString(row, ["segments", "product_item_id"]) || "",
+    title: getString(row, ["segments", "productTitle"]) || getString(row, ["segments", "product_title"]) || "",
+    clicks: getNumber(row, ["metrics", "clicks"]),
+    impressions: getNumber(row, ["metrics", "impressions"]),
+    conversions: getNumber(row, ["metrics", "conversions"]),
+    cost: getNumber(row, ["metrics", "costMicros"]) / 1_000_000,
+    conversion_value: getNumber(row, ["metrics", "conversionsValue"]),
+  })).filter((row) => row.id || row.title);
+}
+
+function mergeProductRows(rows: ProductMetric[]): ProductMetric[] {
+  const grouped = new Map<string, ProductMetric>();
+
+  for (const row of rows) {
+    const key = (row.id || row.title).toLowerCase();
+    const existing = grouped.get(key);
+    if (!existing) {
+      grouped.set(key, { ...row });
+      continue;
+    }
+
+    existing.clicks += row.clicks;
+    existing.impressions += row.impressions;
+    existing.conversions += row.conversions;
+    existing.cost += row.cost;
+    existing.conversion_value += row.conversion_value;
+    // Keep the longer title
+    if (row.title.length > existing.title.length) existing.title = row.title;
+  }
+
+  return Array.from(grouped.values())
+    .sort((a, b) => b.clicks - a.clicks || b.conversions - a.conversions || b.impressions - a.impressions);
 }
 
 async function googleAdsSearchStream({
