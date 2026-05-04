@@ -94,7 +94,7 @@ serve(async (req) => {
     const accessToken = await createServiceAccountAccessToken(serviceAccount);
     const { startDate, endDate } = getMonthRange(period_month);
 
-    const [searchRows, pmaxRows, deviceRows] = await Promise.all([
+    const [searchRows, pmaxRows, deviceRows, productRows] = await Promise.all([
       googleAdsSearchStream({
         accessToken,
         developerToken,
@@ -115,6 +115,13 @@ serve(async (req) => {
         loginCustomerId,
         customerId,
         query: buildDeviceSplitQuery(startDate, endDate),
+      }),
+      googleAdsSearchStream({
+        accessToken,
+        developerToken,
+        loginCustomerId,
+        customerId,
+        query: buildProductPerformanceQuery(startDate, endDate),
       }),
     ]);
 
