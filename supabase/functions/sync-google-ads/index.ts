@@ -48,6 +48,16 @@ type ProductMetric = {
   conversion_value: number;
 };
 
+type CampaignMetric = {
+  name: string;
+  spend: number;
+  clicks: number;
+  conversions: number;
+  conversion_value: number;
+  roas: number;
+  cpa: number;
+};
+
 const supabaseAdmin = createClient(
   Deno.env.get("SUPABASE_URL") ?? "",
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
@@ -94,7 +104,7 @@ serve(async (req) => {
     const accessToken = await createServiceAccountAccessToken(serviceAccount);
     const { startDate, endDate } = getMonthRange(period_month);
 
-    const [searchRows, pmaxRows, deviceRows, productRows] = await Promise.all([
+    const [searchRows, pmaxRows, deviceRows, productRows, campaignRows] = await Promise.all([
       googleAdsSearchStream({
         accessToken,
         developerToken,
@@ -123,6 +133,13 @@ serve(async (req) => {
         customerId,
         query: buildProductPerformanceQuery(startDate, endDate),
       }),
+      googleAdsSearchStream({
+        accessToken,
+        developerToken,
+        loginCustomerId,
+        customerId,
+        query: buildCampaignPerformanceQuery(startDate, endDate),
+      }),
     ]);
 
     const topSearchTerms = mergeSearchTerms([
@@ -131,6 +148,7 @@ serve(async (req) => {
     ]).slice(0, 25);
     const deviceSplit = mergeDeviceRows(normalizeDeviceRows(deviceRows)).slice(0, 10);
     const topProducts = mergeProductRows(normalizeProductRows(productRows)).slice(0, PRODUCT_LIMIT);
+    const topCampaigns = mergeCampaignRows(normalizeCampaignRows(campaignRows)).slice(0, 10);
 
     const report = await ensureReport({
       adAccountId: adAccount.id,
@@ -138,6 +156,26 @@ serve(async (req) => {
       clientName: client.name,
       periodMonth: period_month,
     });
+
+    // Fetch prior month metrics for MoM comparisons and the trend chart
+    const priorDate = new Date(period_month);
+    priorDate.setMonth(priorDate.getMonth() - 1);
+    const priorMonthStr = `${priorDate.getFullYear()}-${String(priorDate.getMonth() + 1).padStart(2, "0")}-01`;
+    const { data: priorReport } = await supabaseAdmin
+      .from("reports")
+      .select("id")
+      .eq("client_id", client.id)
+      .eq("period_month", priorMonthStr)
+      .maybeSingle();
+    let priorMetrics: Record<string, unknown> | null = null;
+    if (priorReport) {
+      const { data: pm } = await supabaseAdmin
+        .from("report_metrics")
+        .select("clicks, impressions, cost, conversions, conversion_value, ctr, cpc, cpa, roas, conversion_rate")
+        .eq("report_id", priorReport.id)
+        .single();
+      if (pm) priorMetrics = pm as Record<string, unknown>;
+    }
 
     // Compute aggregate metrics from device split
     const totalClicks = deviceSplit.reduce((s: number, d: DeviceMetric) => s + d.clicks, 0);
@@ -166,6 +204,8 @@ serve(async (req) => {
       top_search_terms: topSearchTerms,
       top_keywords: topSearchTerms,
       top_products: topProducts,
+      top_campaigns: topCampaigns,
+      ...(priorMetrics ? { prior: priorMetrics } : {}),
     }, { onConflict: "report_id" });
     if (metricsError) throw new Error(metricsError.message);
 
@@ -322,6 +362,62 @@ function buildProductPerformanceQuery(startDate: string, endDate: string) {
     ORDER BY metrics.clicks DESC
     LIMIT ${PRODUCT_LIMIT * 2}
   `.trim();
+}
+
+function buildCampaignPerformanceQuery(startDate: string, endDate: string) {
+  return `
+    SELECT
+      campaign.name,
+      metrics.clicks,
+      metrics.impressions,
+      metrics.cost_micros,
+      metrics.conversions,
+      metrics.conversions_value
+    FROM campaign
+    WHERE segments.date BETWEEN '${startDate}' AND '${endDate}'
+      AND metrics.cost_micros > 0
+    ORDER BY metrics.cost_micros DESC
+    LIMIT 200
+  `.trim();
+}
+
+function normalizeCampaignRows(rows: Json[]): CampaignMetric[] {
+  return rows.map((row) => {
+    const cost = getNumber(row, ["metrics", "costMicros"]) / 1_000_000;
+    const conversions = getNumber(row, ["metrics", "conversions"]);
+    const conversionValue = getNumber(row, ["metrics", "conversionsValue"]);
+    return {
+      name: getString(row, ["campaign", "name"]) || "Unknown campaign",
+      spend: cost,
+      clicks: getNumber(row, ["metrics", "clicks"]),
+      conversions,
+      conversion_value: conversionValue,
+      roas: 0,
+      cpa: 0,
+    };
+  }).filter((row) => row.name && row.spend > 0);
+}
+
+function mergeCampaignRows(rows: CampaignMetric[]): CampaignMetric[] {
+  const grouped = new Map<string, CampaignMetric>();
+  for (const row of rows) {
+    const key = row.name.toLowerCase();
+    const existing = grouped.get(key);
+    if (!existing) {
+      grouped.set(key, { ...row });
+      continue;
+    }
+    existing.spend += row.spend;
+    existing.clicks += row.clicks;
+    existing.conversions += row.conversions;
+    existing.conversion_value += row.conversion_value;
+  }
+  return Array.from(grouped.values()).map((c) => ({
+    ...c,
+    spend: Math.round(c.spend * 100) / 100,
+    roas: c.spend > 0 ? Math.round((c.conversion_value / c.spend) * 100) / 100 : 0,
+    cpa: c.conversions > 0 ? Math.round((c.spend / c.conversions) * 100) / 100 : 0,
+  })).sort((a, b) => b.spend - a.spend);
 }
 
 function normalizeProductRows(rows: Json[]): ProductMetric[] {

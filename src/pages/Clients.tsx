@@ -63,6 +63,11 @@ export default function Clients() {
     }
 
     toast.success("Client created");
+    await supabase.from("client_notes").insert([
+      { client_id: inserted.id, tab_key: "targets", tab_label: "Targets", content: "", position: 0 },
+      { client_id: inserted.id, tab_key: "updates", tab_label: "Updates", content: "", position: 1 },
+      { client_id: inserted.id, tab_key: "adjustments", tab_label: "Adjustments", content: "", position: 2 },
+    ] as any[]);
     setOpen(false);
     setForm({ name: "", business_type: "ecommerce", report_goal: "sales", industry: "", website: "", brand_notes: "", google_ads_customer_id: "", currency: "EUR" });
     load();

@@ -16,7 +16,7 @@ const SECTION_PROMPTS: Record<string, string> = {
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
-    const { section_kind, client, period_month, metrics } = await req.json();
+    const { section_kind, client, period_month, metrics, notes } = await req.json();
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) throw new Error("LOVABLE_API_KEY not configured");
 
@@ -40,6 +40,7 @@ Metrics this month vs prior:
 - CPA: $${m.cpa} (prior $${p.cpa})
 ${isEcom ? `- Conv. value: $${m.conversion_value} (prior $${p.conversion_value})\n- ROAS: ${m.roas}x (prior ${p.roas}x)` : ""}
 Top campaigns: ${JSON.stringify(m.top_campaigns?.slice(0, 3) || [])}.
+${notes ? `\nClient context notes (use these to explain changes — e.g. budget increases, paused campaigns, new targets):\n${notes}` : ""}
 Avoid generic wrap-up language. Prefer a direct explanation, even if the answer is simply seasonality, auction pressure, or campaign mix.`;
 
     const system = `You are a senior performance marketing strategist writing the monthly Google Ads report for LYNCK Studio.

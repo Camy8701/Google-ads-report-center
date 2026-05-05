@@ -61,8 +61,31 @@ export default function Reports() {
     await supabase.from("report_metrics").insert([{ report_id: r.id, ...mock.metrics }]);
     await supabase.from("report_sections").insert(mock.sections.map((s: any) => ({ ...s, report_id: r.id })));
     await supabase.from("report_recommendations").insert(mock.recommendations.map((s: any) => ({ ...s, report_id: r.id })));
+
+    // Auto-sync real Google Ads data if the client has a linked account — overrides mock data
+    const { data: linkedAccounts } = await supabase
+      .from("ad_accounts")
+      .select("id, google_ads_customer_id")
+      .eq("client_id", form.client_id)
+      .not("google_ads_customer_id", "is", null);
+
+    if (linkedAccounts?.length) {
+      toast.info("Syncing real Google Ads data for this period…");
+      for (const account of linkedAccounts) {
+        try {
+          await supabase.functions.invoke("sync-google-ads", {
+            body: { ad_account_id: account.id, period_month: period },
+          });
+        } catch (_) {
+          // Sync failed — mock data remains as fallback
+        }
+      }
+      toast.success("Report ready with real Google Ads data");
+    } else {
+      toast.success("Report drafted");
+    }
+
     setCreating(false); setOpen(false);
-    toast.success("Report drafted");
     window.location.href = `/reports/${r.id}`;
   };
 

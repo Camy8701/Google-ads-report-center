@@ -182,6 +182,7 @@ export function generateMockReport({ businessType, reportGoal, periodMonth }: Ge
         ],
         conversionSplit,
         leadActions,
+        timeline: trend,
       },
     },
     {
