@@ -139,8 +139,29 @@ serve(async (req) => {
       periodMonth: period_month,
     });
 
+    // Compute aggregate metrics from device split
+    const totalClicks = deviceSplit.reduce((s: number, d: DeviceMetric) => s + d.clicks, 0);
+    const totalImpressions = deviceSplit.reduce((s: number, d: DeviceMetric) => s + d.impressions, 0);
+    const totalCost = deviceSplit.reduce((s: number, d: DeviceMetric) => s + d.cost, 0);
+    const totalConversions = deviceSplit.reduce((s: number, d: DeviceMetric) => s + d.conversions, 0);
+    const totalConversionValue = deviceSplit.reduce((s: number, d: DeviceMetric) => s + d.conversion_value, 0);
+    const ctr = totalImpressions > 0 ? totalClicks / totalImpressions : 0;
+    const cpc = totalClicks > 0 ? totalCost / totalClicks : 0;
+    const cpa = totalConversions > 0 ? totalCost / totalConversions : 0;
+    const roas = totalCost > 0 ? totalConversionValue / totalCost : 0;
+
     const { error: metricsError } = await supabaseAdmin.from("report_metrics").upsert({
       report_id: report.id,
+      clicks: totalClicks,
+      impressions: totalImpressions,
+      cost: Math.round(totalCost * 100) / 100,
+      conversions: Math.round(totalConversions * 100) / 100,
+      conversion_value: Math.round(totalConversionValue * 100) / 100,
+      conversion_rate: Math.round(ctr * 10000) / 10000,
+      ctr: Math.round(ctr * 10000) / 10000,
+      cpc: Math.round(cpc * 100) / 100,
+      cpa: Math.round(cpa * 100) / 100,
+      roas: Math.round(roas * 100) / 100,
       device_split: deviceSplit,
       top_search_terms: topSearchTerms,
       top_keywords: topSearchTerms,
