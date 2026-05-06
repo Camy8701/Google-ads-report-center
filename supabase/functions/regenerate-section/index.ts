@@ -6,11 +6,12 @@ const corsHeaders = {
 };
 
 const SECTION_PROMPTS: Record<string, string> = {
-  executive_summary: "Write a tight 3-4 sentence executive summary. Open with 'I have prepared'. Focus only on the primary performance outcome, the biggest driver, and the one thing the client should know. First-person, constructive, no filler.",
+  executive_summary: "Write a tight 3-4 sentence executive summary. Open with 'I have prepared' (translated to the report language). Focus only on the primary performance outcome, the biggest driver, and the one thing the client should know. First-person, constructive, no filler.",
   what_changed: "Write a concise 3-4 sentence explanation of what changed and why. Reference only the most material metrics. If the most likely cause is seasonality or external market pressure, say that plainly instead of forcing a deeper explanation.",
   opportunities: "Write a compact 2-3 sentence optimization lens section. Focus on where attention should go next without sounding generic. First-person, solution-oriented.",
   decision_page: "Write a 1-2 sentence intro to the recommended actions. Confident and direct. First-person.",
   appendix: "Write a 1-2 sentence note describing what supporting detail is available on request.",
+  recommendations: `Return ONLY a valid JSON array (no markdown, no code fences, no extra text) of exactly 3 recommended actions based on the account data. Each object must have these exact keys: "title" (short action title, max 12 words), "why" (1-2 sentences explaining why this matters), "expected_impact" (1 sentence on the outcome), "urgency" (one of: "good", "medium", "urgent"). Write everything in the report language. Example structure: [{"title":"...","why":"...","expected_impact":"...","urgency":"medium"}]`,
 };
 
 serve(async (req) => {
@@ -85,8 +86,23 @@ Keep copy tight — used in live calls. No headings, no bullet points, no markdo
     }
 
     const json = await aiResp.json();
-    const body = json?.choices?.[0]?.message?.content?.trim();
-    return new Response(JSON.stringify({ body }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const raw = json?.choices?.[0]?.message?.content?.trim() ?? "";
+
+    // For recommendations, parse JSON array and return structured data
+    if (section_kind === "recommendations") {
+      try {
+        // Strip any accidental markdown code fences
+        const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+        const recommendations = JSON.parse(cleaned);
+        if (!Array.isArray(recommendations)) throw new Error("Not an array");
+        return new Response(JSON.stringify({ recommendations }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      } catch {
+        console.error("Failed to parse recommendations JSON:", raw);
+        return new Response(JSON.stringify({ error: "Invalid recommendations format from AI" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+    }
+
+    return new Response(JSON.stringify({ body: raw }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
     console.error(e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });

@@ -265,34 +265,35 @@ function isImportedGoogleAdsShape(rawMetrics: MetricsRow) {
   return topKeywords.some((item) => "text" in item) || topProducts.some((item) => "title" in item) || topCampaigns.some((item) => "cost" in item && !("spend" in item));
 }
 
-function buildLiveSummary(reportGoal: ReportGoalFamily, metrics: MetricsRow, topCampaigns: any[]) {
+function buildLiveSummary(reportGoal: ReportGoalFamily, metrics: MetricsRow, topCampaigns: any[], t: ReportTranslations) {
   const bestCampaign = topCampaigns[0];
+  const cam = bestCampaign?.name as string | undefined;
   if (reportGoal === "ecommerce") {
     return {
-      body: `I have prepared the monthly readout using the actual account data for this period. Spend landed at ${fmtMoney(metrics.cost)} and produced ${fmtMoney(metrics.conversion_value)} in tracked value, keeping ROAS at ${metrics.roas.toFixed(2)}x. ${bestCampaign ? `${bestCampaign.name} was the strongest efficiency driver in the account.` : "This month should be read through return, not just volume."}`,
+      body: t.liveSummaryEcom(fmtMoney(metrics.cost), fmtMoney(metrics.conversion_value), metrics.roas.toFixed(2), cam),
       takeaways: [
-        `ROAS at ${metrics.roas.toFixed(2)}x on ${fmtMoney(metrics.cost)} spend`,
-        `${fmtNum(metrics.conversions)} tracked conversions worth ${fmtMoney(metrics.conversion_value)}`,
-        `${bestCampaign ? `${bestCampaign.name} led the account on return` : "Efficiency was concentrated in a small part of the account"}`,
+        t.liveTakeaway1Ecom(metrics.roas.toFixed(2), fmtMoney(metrics.cost)),
+        t.liveTakeaway2Ecom(fmtNum(metrics.conversions), fmtMoney(metrics.conversion_value)),
+        t.liveTakeaway3Ecom(cam),
       ],
     };
   }
   if (reportGoal === "lead_gen") {
     return {
-      body: `I have prepared the monthly readout using the actual account data for this period. Spend landed at ${fmtMoney(metrics.cost)} and drove ${fmtNum(metrics.conversions)} tracked conversions at ${fmtMoney(metrics.cpa)} CPA. ${bestCampaign ? `${bestCampaign.name} was the strongest lead source in the account.` : "The account should be judged on hard output first."}`,
+      body: t.liveSummaryLeadGen(fmtMoney(metrics.cost), fmtNum(metrics.conversions), fmtMoney(metrics.cpa), cam),
       takeaways: [
-        `${fmtNum(metrics.conversions)} tracked conversions`,
-        `CPA at ${fmtMoney(metrics.cpa)} on ${fmtMoney(metrics.cost)} spend`,
-        `${bestCampaign ? `${bestCampaign.name} created the best lead efficiency` : "Lead quality should stay ahead of raw volume"}`,
+        t.liveTakeaway1LeadGen(fmtNum(metrics.conversions)),
+        t.liveTakeaway2LeadGen(fmtMoney(metrics.cpa), fmtMoney(metrics.cost)),
+        t.liveTakeaway3LeadGen(cam),
       ],
     };
   }
   return {
-    body: `I have prepared the monthly readout using the actual account data for this period. The account delivered ${fmtNum(metrics.clicks)} clicks at a ${fmtPct(metrics.ctr)} CTR while holding CPC at ${fmtMoneyPrecise(metrics.cpc)}. ${bestCampaign ? `${bestCampaign.name} carried the strongest momentum.` : "This month should be judged by traffic quality and efficient reach."}`,
+    body: t.liveSummaryGrowth(fmtNum(metrics.clicks), fmtPct(metrics.ctr), fmtMoneyPrecise(metrics.cpc), cam),
     takeaways: [
-      `${fmtNum(metrics.clicks)} clicks at ${fmtPct(metrics.ctr)} CTR`,
-      `CPC at ${fmtMoneyPrecise(metrics.cpc)} on ${fmtMoney(metrics.cost)} spend`,
-      `${bestCampaign ? `${bestCampaign.name} carried the strongest momentum` : "Momentum was uneven across the account"}`,
+      t.liveTakeaway1Growth(fmtNum(metrics.clicks), fmtPct(metrics.ctr)),
+      t.liveTakeaway2Growth(fmtMoneyPrecise(metrics.cpc), fmtMoney(metrics.cost)),
+      t.liveTakeaway3Growth(cam),
     ],
   };
 }
@@ -319,16 +320,16 @@ function buildLiveWhatChanged(reportGoal: ReportGoalFamily, metrics: MetricsRow,
   };
 }
 
-function buildLiveOpportunities(reportGoal: ReportGoalFamily, topCampaigns: any[], topKeywords: any[]) {
+function buildLiveOpportunities(reportGoal: ReportGoalFamily, topCampaigns: any[], topKeywords: any[], t: ReportTranslations) {
   const weakCampaign = [...topCampaigns].reverse().find((item) => (item.spend || 0) > 0);
   const strongestKeyword = topKeywords[0];
   if (reportGoal === "ecommerce") {
-    return `The clearest upside is to shift more weight toward the campaigns and search themes already converting, while reducing exposure in campaigns still spending without return. ${strongestKeyword ? `${strongestKeyword.term} is one of the strongest proven demand signals in the account.` : ""}`.trim();
+    return t.liveOpportunitiesEcom(strongestKeyword?.term);
   }
   if (reportGoal === "lead_gen") {
-    return `The clearest upside is to weight budget toward the campaigns already producing conversions efficiently, while trimming broader coverage that consumes spend without enough hard output. ${weakCampaign ? `${weakCampaign.name} is the first area to review.` : ""}`.trim();
+    return t.liveOpportunitiesLeadGen(weakCampaign?.name);
   }
-  return `The clearest upside is to keep the strongest demand themes live while cutting placements and campaign pockets that add spend without enough downstream response. ${weakCampaign ? `${weakCampaign.name} is the first area to review.` : ""}`.trim();
+  return t.liveOpportunitiesGrowth(weakCampaign?.name);
 }
 
 function buildLiveRecommendations(reportGoal: ReportGoalFamily, topCampaigns: any[], topKeywords: any[], topProducts: any[]) {
@@ -381,6 +382,8 @@ export default function ReportView() {
   const [regenerating, setRegenerating] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [resyncing, setResyncing] = useState(false);
+  const [editingRecs, setEditingRecs] = useState<Record<string, { title: string; why: string; expected_impact: string; urgency: string }>>({});
+  const [regeneratingRecs, setRegeneratingRecs] = useState(false);
   const [historicalTimeline, setHistoricalTimeline] = useState<any[]>([]);
   const [clientNotes, setClientNotes] = useState<any[]>([]);
   const reportRef = useRef<HTMLDivElement>(null);
@@ -622,6 +625,96 @@ export default function ReportView() {
     }
   };
 
+  const saveRec = async (rec: RecRow & { id: string }) => {
+    const edits = editingRecs[rec.id];
+    if (!edits) return;
+    const isTemp = rec.id.startsWith("live-rec-");
+    if (isTemp) {
+      const { error } = await supabase.from("report_recommendations").insert([{
+        report_id: id,
+        position: rec.position,
+        title: edits.title,
+        why: edits.why,
+        expected_impact: edits.expected_impact,
+        urgency: edits.urgency,
+      }] as any);
+      if (error) return toast.error(error.message);
+    } else {
+      const { error } = await supabase.from("report_recommendations").update({
+        title: edits.title,
+        why: edits.why,
+        expected_impact: edits.expected_impact,
+        urgency: edits.urgency,
+      }).eq("id", rec.id);
+      if (error) return toast.error(error.message);
+    }
+    setEditingRecs((prev) => { const n = { ...prev }; delete n[rec.id]; return n; });
+    toast.success("Saved");
+    load();
+  };
+
+  const deleteRec = async (rec: RecRow & { id: string }) => {
+    if (rec.id.startsWith("live-rec-")) { toast.error("Save this action first before deleting."); return; }
+    const { error } = await supabase.from("report_recommendations").delete().eq("id", rec.id);
+    if (error) return toast.error(error.message);
+    toast.success("Deleted");
+    load();
+  };
+
+  const addRec = async () => {
+    const maxPos = recs.length > 0 ? Math.max(...recs.map((r) => r.position)) : 0;
+    const { error } = await supabase.from("report_recommendations").insert([{
+      report_id: id,
+      position: maxPos + 1,
+      title: "New action",
+      why: "",
+      expected_impact: "",
+      urgency: "medium",
+    }] as any);
+    if (error) return toast.error(error.message);
+    load();
+  };
+
+  const regenerateRecs = async () => {
+    if (!metrics || !client) return;
+    setRegeneratingRecs(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("regenerate-section", {
+        body: {
+          section_kind: "recommendations",
+          client: {
+            name: client.name,
+            business_type: client.business_type,
+            brand_notes: getVisibleBrandNotes(client.brand_notes),
+            report_goal: getClientReportGoal(client.brand_notes, client.business_type),
+            language: getClientLanguage(client.brand_notes),
+          },
+          period_month: report.period_month,
+          metrics: normalizeMetricsForDisplay(metrics),
+          notes: clientNotes.length
+            ? clientNotes.map((n: any) => `${n.tab_label}:\n${n.content}`).join("\n\n")
+            : null,
+        },
+      });
+      if (error) throw error;
+      const parsed: Array<{ title: string; why: string; expected_impact: string; urgency: string }> = data?.recommendations;
+      if (!Array.isArray(parsed) || parsed.length === 0) throw new Error("No recommendations returned");
+      await supabase.from("report_recommendations").delete().eq("report_id", id);
+      await supabase.from("report_recommendations").insert(
+        parsed.map((r, i) => ({ report_id: id, position: i + 1, title: r.title, why: r.why, expected_impact: r.expected_impact, urgency: r.urgency || "medium" }))
+      );
+      toast.success("Recommendations regenerated");
+      load();
+    } catch (e: any) {
+      const msg = String(e?.message || "");
+      if (msg.includes("429")) toast.error("Rate limit reached, try again in a minute.");
+      else if (msg.includes("402")) toast.error("AI credits depleted.");
+      else toast.error("Could not regenerate: " + msg);
+    } finally {
+      setRegeneratingRecs(false);
+    }
+  };
+
   const setStatus = async (status: string) => {
     const patch: any = { status };
     if (status === "approved") patch.approved_at = new Date().toISOString();
@@ -664,9 +757,9 @@ export default function ReportView() {
   const topProducts = aggregateProducts(normalizeProducts(asArray<any>(displayMetrics.top_products)))
     .sort((a, b) => (b.clicks || 0) - (a.clicks || 0) || (b.conversions || 0) - (a.conversions || 0));
   const deviceSplit = buildDeviceSplit(displayMetrics);
-  const liveSummary = useLiveDerivedContent ? buildLiveSummary(goalFamily, displayMetrics, spendCampaigns) : null;
+  const liveSummary = useLiveDerivedContent ? buildLiveSummary(goalFamily, displayMetrics, spendCampaigns, t) : null;
   const liveWhatChanged = useLiveDerivedContent ? buildLiveWhatChanged(goalFamily, displayMetrics, t) : null;
-  const liveOpportunities = useLiveDerivedContent ? buildLiveOpportunities(goalFamily, spendCampaigns, topKeywords) : null;
+  const liveOpportunities = useLiveDerivedContent ? buildLiveOpportunities(goalFamily, spendCampaigns, topKeywords, t) : null;
   const liveRecommendations = useLiveDerivedContent ? buildLiveRecommendations(goalFamily, spendCampaigns, topKeywords, topProducts) : [];
   const summaryBody = useLiveDerivedContent ? liveSummary?.body || summary?.body || "" : summary?.body || "";
   const takeaways: string[] = useLiveDerivedContent
@@ -885,28 +978,95 @@ export default function ReportView() {
 
         <SectionWrap label={t.decisionPageLabel} title={t.decisionPageTitle} emphasize={t.decisionPageEm}>
           <p className="mb-6 max-w-2xl text-card-body lynck-muted">{decisionBody}</p>
+          <div className="no-print pdf-export-hidden flex flex-wrap items-center gap-2 mb-5">
+            <Button size="sm" variant="outline" onClick={addRec}>+ {t.addRecommendation}</Button>
+            <Button size="sm" variant="outline" disabled={regeneratingRecs} onClick={regenerateRecs}>
+              <Sparkles className="size-3.5 mr-1.5" />
+              {regeneratingRecs ? t.regeneratingRecs : t.regenerateRecommendations}
+            </Button>
+          </div>
           <div className="space-y-4">
-            {recommendationItems.map((r, i) => (
-              <div key={r.id} className="lynck-card p-6">
-                <div className="mb-3 flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-4">
-                    <div className="lynck-section-label mt-1.5">{String(i + 1).padStart(2, "0")}</div>
-                    <h3 className="font-display text-xl font-bold">{r.title}</h3>
+            {recommendationItems.length === 0 && (
+              <p className="lynck-muted text-card-body">{t.noRecs}</p>
+            )}
+            {recommendationItems.map((r, i) => {
+              const isEdit = editingRecs[r.id] !== undefined;
+              const edits = editingRecs[r.id];
+              return (
+                <div key={r.id} className="lynck-card p-6">
+                  <div className="mb-3 flex items-start justify-between gap-4">
+                    <div className="flex items-start gap-4 flex-1 min-w-0">
+                      <div className="lynck-section-label mt-1.5 shrink-0">{String(i + 1).padStart(2, "0")}</div>
+                      {isEdit ? (
+                        <input
+                          className="flex-1 bg-transparent border-b border-primary text-xl font-bold font-display outline-none"
+                          value={edits.title}
+                          onChange={(e) => setEditingRecs((prev) => ({ ...prev, [r.id]: { ...prev[r.id], title: e.target.value } }))}
+                        />
+                      ) : (
+                        <h3 className="font-display text-xl font-bold">{r.title}</h3>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0 no-print pdf-export-hidden">
+                      {isEdit ? (
+                        <>
+                          <Button size="sm" variant="ghost" onClick={() => setEditingRecs((prev) => { const n = { ...prev }; delete n[r.id]; return n; })}>{t.cancel}</Button>
+                          <Button size="sm" onClick={() => saveRec(r as any)}><Save className="size-3.5 mr-1.5" />{t.save}</Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button size="sm" variant="ghost" onClick={() => setEditingRecs((prev) => ({ ...prev, [r.id]: { title: r.title, why: r.why, expected_impact: r.expected_impact, urgency: r.urgency } }))}>{t.edit}</Button>
+                          <Button size="sm" variant="ghost" className="text-status-urgent hover:text-status-urgent" onClick={() => deleteRec(r as any)}>{t.deleteRec}</Button>
+                        </>
+                      )}
+                      <StatusBadge variant="urgency" value={isEdit ? edits.urgency : r.urgency} />
+                    </div>
                   </div>
-                  <StatusBadge variant="urgency" value={r.urgency} />
+                  <div className="grid gap-5 md:grid-cols-2 pl-12">
+                    <div>
+                      <p className="lynck-section-label mb-1.5">{t.whyItMatters}</p>
+                      {isEdit ? (
+                        <textarea
+                          rows={3}
+                          className="w-full bg-transparent border border-border rounded-lg p-2 text-card-body outline-none resize-none focus:border-primary"
+                          value={edits.why}
+                          onChange={(e) => setEditingRecs((prev) => ({ ...prev, [r.id]: { ...prev[r.id], why: e.target.value } }))}
+                        />
+                      ) : (
+                        <p className="text-card-body">{r.why}</p>
+                      )}
+                    </div>
+                    <div>
+                      <p className="lynck-section-label mb-1.5">{t.expectedImpact}</p>
+                      {isEdit ? (
+                        <textarea
+                          rows={3}
+                          className="w-full bg-transparent border border-border rounded-lg p-2 text-card-body outline-none resize-none focus:border-primary"
+                          value={edits.expected_impact}
+                          onChange={(e) => setEditingRecs((prev) => ({ ...prev, [r.id]: { ...prev[r.id], expected_impact: e.target.value } }))}
+                        />
+                      ) : (
+                        <p className="text-card-body">{r.expected_impact}</p>
+                      )}
+                    </div>
+                  </div>
+                  {isEdit && (
+                    <div className="mt-4 pl-12 flex gap-2">
+                      {["good", "medium", "urgent"].map((u) => (
+                        <button
+                          key={u}
+                          type="button"
+                          onClick={() => setEditingRecs((prev) => ({ ...prev, [r.id]: { ...prev[r.id], urgency: u } }))}
+                          className={`px-3 py-1 rounded-full text-[10px] uppercase tracking-widest border transition-colors ${edits.urgency === u ? "border-primary text-primary" : "border-border text-muted-foreground hover:border-primary/50"}`}
+                        >
+                          {u}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <div className="grid gap-5 md:grid-cols-2 pl-12">
-                  <div>
-                    <p className="lynck-section-label mb-1.5">{t.whyItMatters}</p>
-                    <p className="text-card-body">{r.why}</p>
-                  </div>
-                  <div>
-                    <p className="lynck-section-label mb-1.5">{t.expectedImpact}</p>
-                    <p className="text-card-body">{r.expected_impact}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </SectionWrap>
 

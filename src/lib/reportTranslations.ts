@@ -147,6 +147,37 @@ export interface ReportTranslations {
   tooltipConversions: string;
   tooltipSpendShare: string;
   tooltipShare: string;
+
+  // Live summary body templates (buildLiveSummary)
+  liveSummaryEcom: (cost: string, convValue: string, roas: string, campaignName?: string) => string;
+  liveSummaryLeadGen: (cost: string, conversions: string, cpa: string, campaignName?: string) => string;
+  liveSummaryGrowth: (clicks: string, ctr: string, cpc: string, campaignName?: string) => string;
+
+  // Live takeaway templates (buildLiveSummary)
+  liveTakeaway1Ecom: (roas: string, cost: string) => string;
+  liveTakeaway2Ecom: (conversions: string, convValue: string) => string;
+  liveTakeaway3Ecom: (campaignName?: string) => string;
+  liveTakeaway1LeadGen: (conversions: string) => string;
+  liveTakeaway2LeadGen: (cpa: string, cost: string) => string;
+  liveTakeaway3LeadGen: (campaignName?: string) => string;
+  liveTakeaway1Growth: (clicks: string, ctr: string) => string;
+  liveTakeaway2Growth: (cpc: string, cost: string) => string;
+  liveTakeaway3Growth: (campaignName?: string) => string;
+
+  // Live opportunities body templates (buildLiveOpportunities)
+  liveOpportunitiesEcom: (keywordTerm?: string) => string;
+  liveOpportunitiesLeadGen: (campaignName?: string) => string;
+  liveOpportunitiesGrowth: (campaignName?: string) => string;
+
+  // Recommendations UI
+  addRecommendation: string;
+  regenerateRecommendations: string;
+  regeneratingRecs: string;
+  deleteRec: string;
+  recTitle: string;
+  recWhy: string;
+  recImpact: string;
+  noRecs: string;
 }
 
 const en: ReportTranslations = {
@@ -273,6 +304,39 @@ const en: ReportTranslations = {
   tooltipConversions: "Conversions",
   tooltipSpendShare: "Spend share",
   tooltipShare: "Share",
+
+  liveSummaryEcom: (cost, convValue, roas, cam) =>
+    `I have prepared the monthly readout using the actual account data for this period. Spend landed at ${cost} and produced ${convValue} in tracked value, keeping ROAS at ${roas}x. ${cam ? `${cam} was the strongest efficiency driver in the account.` : "This month should be read through return, not just volume."}`,
+  liveSummaryLeadGen: (cost, conversions, cpa, cam) =>
+    `I have prepared the monthly readout using the actual account data for this period. Spend landed at ${cost} and drove ${conversions} tracked conversions at ${cpa} CPA. ${cam ? `${cam} was the strongest lead source in the account.` : "The account should be judged on hard output first."}`,
+  liveSummaryGrowth: (clicks, ctr, cpc, cam) =>
+    `I have prepared the monthly readout using the actual account data for this period. The account delivered ${clicks} clicks at a ${ctr} CTR while holding CPC at ${cpc}. ${cam ? `${cam} carried the strongest momentum.` : "This month should be judged by traffic quality and efficient reach."}`,
+
+  liveTakeaway1Ecom: (roas, cost) => `ROAS at ${roas}x on ${cost} spend`,
+  liveTakeaway2Ecom: (conversions, convValue) => `${conversions} tracked conversions worth ${convValue}`,
+  liveTakeaway3Ecom: (cam) => cam ? `${cam} led the account on return` : "Efficiency was concentrated in a small part of the account",
+  liveTakeaway1LeadGen: (conversions) => `${conversions} tracked conversions`,
+  liveTakeaway2LeadGen: (cpa, cost) => `CPA at ${cpa} on ${cost} spend`,
+  liveTakeaway3LeadGen: (cam) => cam ? `${cam} created the best lead efficiency` : "Lead quality should stay ahead of raw volume",
+  liveTakeaway1Growth: (clicks, ctr) => `${clicks} clicks at ${ctr} CTR`,
+  liveTakeaway2Growth: (cpc, cost) => `CPC at ${cpc} on ${cost} spend`,
+  liveTakeaway3Growth: (cam) => cam ? `${cam} carried the strongest momentum` : "Momentum was uneven across the account",
+
+  liveOpportunitiesEcom: (kw) =>
+    `The clearest upside is to shift more weight toward the campaigns and search themes already converting, while reducing exposure in campaigns still spending without return.${kw ? ` ${kw} is one of the strongest proven demand signals in the account.` : ""}`.trim(),
+  liveOpportunitiesLeadGen: (cam) =>
+    `The clearest upside is to weight budget toward the campaigns already producing conversions efficiently, while trimming broader coverage that consumes spend without enough hard output.${cam ? ` ${cam} is the first area to review.` : ""}`.trim(),
+  liveOpportunitiesGrowth: (cam) =>
+    `The clearest upside is to keep the strongest demand themes live while cutting placements and campaign pockets that add spend without enough downstream response.${cam ? ` ${cam} is the first area to review.` : ""}`.trim(),
+
+  addRecommendation: "Add action",
+  regenerateRecommendations: "Regenerate actions",
+  regeneratingRecs: "Regenerating…",
+  deleteRec: "Delete",
+  recTitle: "Action title",
+  recWhy: "Why it matters",
+  recImpact: "Expected impact",
+  noRecs: "No recommended actions yet.",
 };
 
 const de: ReportTranslations = {
@@ -399,6 +463,39 @@ const de: ReportTranslations = {
   tooltipConversions: "Conversions",
   tooltipSpendShare: "Budgetanteil",
   tooltipShare: "Anteil",
+
+  liveSummaryEcom: (cost, convValue, roas, cam) =>
+    `Ich habe den monatlichen Bericht auf Basis der tatsächlichen Kontodaten für diesen Zeitraum erstellt. Das Budget lag bei ${cost} und erzielte ${convValue} an erfasstem Wert bei einem ROAS von ${roas}x. ${cam ? `${cam} war der stärkste Effizienztreiber im Konto.` : "Dieser Monat sollte über den Ertrag bewertet werden, nicht nur über das Volumen."}`,
+  liveSummaryLeadGen: (cost, conversions, cpa, cam) =>
+    `Ich habe den monatlichen Bericht auf Basis der tatsächlichen Kontodaten für diesen Zeitraum erstellt. Das Budget lag bei ${cost} und generierte ${conversions} erfasste Conversions bei einem CPA von ${cpa}. ${cam ? `${cam} war die stärkste Lead-Quelle im Konto.` : "Das Konto sollte primär am tatsächlichen Output gemessen werden."}`,
+  liveSummaryGrowth: (clicks, ctr, cpc, cam) =>
+    `Ich habe den monatlichen Bericht auf Basis der tatsächlichen Kontodaten für diesen Zeitraum erstellt. Das Konto lieferte ${clicks} Klicks bei einer CTR von ${ctr} und hielt den CPC bei ${cpc}. ${cam ? `${cam} hatte das stärkste Momentum.` : "Dieser Monat sollte über Traffic-Qualität und effiziente Reichweite bewertet werden."}`,
+
+  liveTakeaway1Ecom: (roas, cost) => `ROAS bei ${roas}x bei ${cost} Budget`,
+  liveTakeaway2Ecom: (conversions, convValue) => `${conversions} erfasste Conversions im Wert von ${convValue}`,
+  liveTakeaway3Ecom: (cam) => cam ? `${cam} hat das Konto bei der Effizienz angeführt` : "Die Effizienz war auf einen kleinen Teil des Kontos konzentriert",
+  liveTakeaway1LeadGen: (conversions) => `${conversions} erfasste Conversions`,
+  liveTakeaway2LeadGen: (cpa, cost) => `CPA bei ${cpa} bei ${cost} Budget`,
+  liveTakeaway3LeadGen: (cam) => cam ? `${cam} hat die beste Lead-Effizienz erzielt` : "Lead-Qualität sollte vor rohem Volumen stehen",
+  liveTakeaway1Growth: (clicks, ctr) => `${clicks} Klicks bei ${ctr} CTR`,
+  liveTakeaway2Growth: (cpc, cost) => `CPC bei ${cpc} bei ${cost} Budget`,
+  liveTakeaway3Growth: (cam) => cam ? `${cam} hatte das stärkste Momentum` : "Das Momentum war ungleichmäßig im Konto verteilt",
+
+  liveOpportunitiesEcom: (kw) =>
+    `Das größte Potenzial liegt darin, mehr Gewicht auf die Kampagnen und Suchthemen zu verlagern, die bereits konvertieren, und die Ausgaben bei Kampagnen zu reduzieren, die noch ohne Ertrag laufen.${kw ? ` ${kw} ist eines der stärksten bewährten Nachfragesignale im Konto.` : ""}`.trim(),
+  liveOpportunitiesLeadGen: (cam) =>
+    `Das größte Potenzial liegt darin, Budget auf die Kampagnen zu konzentrieren, die bereits effizient konvertieren, und breitere Abdeckung zu reduzieren, die Budget ohne ausreichenden Output verbraucht.${cam ? ` ${cam} ist der erste Bereich, der überprüft werden sollte.` : ""}`.trim(),
+  liveOpportunitiesGrowth: (cam) =>
+    `Das größte Potenzial liegt darin, die stärksten Nachfragethemen aktiv zu halten und gleichzeitig Placements und Kampagnenbereiche zu kürzen, die Budget ohne ausreichende Reaktion verursachen.${cam ? ` ${cam} ist der erste Bereich, der überprüft werden sollte.` : ""}`.trim(),
+
+  addRecommendation: "Maßnahme hinzufügen",
+  regenerateRecommendations: "Maßnahmen neu generieren",
+  regeneratingRecs: "Wird generiert…",
+  deleteRec: "Löschen",
+  recTitle: "Maßnahmen-Titel",
+  recWhy: "Warum es wichtig ist",
+  recImpact: "Erwartete Wirkung",
+  noRecs: "Noch keine empfohlenen Maßnahmen.",
 };
 
 const fr: ReportTranslations = {
@@ -525,6 +622,39 @@ const fr: ReportTranslations = {
   tooltipConversions: "Conversions",
   tooltipSpendShare: "Part des dépenses",
   tooltipShare: "Part",
+
+  liveSummaryEcom: (cost, convValue, roas, cam) =>
+    `J'ai préparé le bilan mensuel à partir des données réelles du compte pour cette période. Les dépenses se sont établies à ${cost} et ont généré ${convValue} de valeur suivie, avec un ROAS de ${roas}x. ${cam ? `${cam} a été le principal moteur d'efficacité du compte.` : "Ce mois doit être lu sous l'angle du retour, pas seulement du volume."}`,
+  liveSummaryLeadGen: (cost, conversions, cpa, cam) =>
+    `J'ai préparé le bilan mensuel à partir des données réelles du compte pour cette période. Les dépenses se sont établies à ${cost} et ont généré ${conversions} conversions suivies à ${cpa} de CPA. ${cam ? `${cam} a été la meilleure source de leads du compte.` : "Le compte doit être évalué sur les résultats concrets en premier."}`,
+  liveSummaryGrowth: (clicks, ctr, cpc, cam) =>
+    `J'ai préparé le bilan mensuel à partir des données réelles du compte pour cette période. Le compte a livré ${clicks} clics à un CTR de ${ctr} en maintenant le CPC à ${cpc}. ${cam ? `${cam} a porté le momentum le plus fort.` : "Ce mois doit être évalué sur la qualité du trafic et l'efficacité de la portée."}`,
+
+  liveTakeaway1Ecom: (roas, cost) => `ROAS à ${roas}x sur ${cost} de dépenses`,
+  liveTakeaway2Ecom: (conversions, convValue) => `${conversions} conversions suivies d'une valeur de ${convValue}`,
+  liveTakeaway3Ecom: (cam) => cam ? `${cam} a dominé le compte en termes de retour` : "L'efficacité était concentrée sur une petite partie du compte",
+  liveTakeaway1LeadGen: (conversions) => `${conversions} conversions suivies`,
+  liveTakeaway2LeadGen: (cpa, cost) => `CPA à ${cpa} sur ${cost} de dépenses`,
+  liveTakeaway3LeadGen: (cam) => cam ? `${cam} a créé la meilleure efficacité de leads` : "La qualité des leads doit primer sur le volume brut",
+  liveTakeaway1Growth: (clicks, ctr) => `${clicks} clics à ${ctr} de CTR`,
+  liveTakeaway2Growth: (cpc, cost) => `CPC à ${cpc} sur ${cost} de dépenses`,
+  liveTakeaway3Growth: (cam) => cam ? `${cam} a porté le momentum le plus fort` : "Le momentum était inégal à travers le compte",
+
+  liveOpportunitiesEcom: (kw) =>
+    `La plus grande opportunité est de déplacer davantage de poids vers les campagnes et thèmes de recherche qui convertissent déjà, tout en réduisant l'exposition aux campagnes qui dépensent encore sans retour.${kw ? ` ${kw} est l'un des signaux de demande prouvés les plus forts du compte.` : ""}`.trim(),
+  liveOpportunitiesLeadGen: (cam) =>
+    `La plus grande opportunité est de concentrer le budget sur les campagnes qui produisent déjà des conversions efficacement, tout en réduisant la couverture plus large qui consomme des dépenses sans production suffisante.${cam ? ` ${cam} est le premier domaine à examiner.` : ""}`.trim(),
+  liveOpportunitiesGrowth: (cam) =>
+    `La plus grande opportunité est de maintenir les thèmes de demande les plus forts tout en supprimant les emplacements et segments de campagne qui ajoutent des dépenses sans réponse suffisante.${cam ? ` ${cam} est le premier domaine à examiner.` : ""}`.trim(),
+
+  addRecommendation: "Ajouter une action",
+  regenerateRecommendations: "Régénérer les actions",
+  regeneratingRecs: "Régénération…",
+  deleteRec: "Supprimer",
+  recTitle: "Titre de l'action",
+  recWhy: "Pourquoi c'est important",
+  recImpact: "Impact attendu",
+  noRecs: "Aucune action recommandée pour l'instant.",
 };
 
 const es: ReportTranslations = {
@@ -651,6 +781,39 @@ const es: ReportTranslations = {
   tooltipConversions: "Conversiones",
   tooltipSpendShare: "Cuota de gasto",
   tooltipShare: "Cuota",
+
+  liveSummaryEcom: (cost, convValue, roas, cam) =>
+    `He preparado el resumen mensual utilizando los datos reales de la cuenta para este período. El gasto se situó en ${cost} y generó ${convValue} en valor registrado, manteniendo un ROAS de ${roas}x. ${cam ? `${cam} fue el principal motor de eficiencia de la cuenta.` : "Este mes debe leerse a través del retorno, no solo del volumen."}`,
+  liveSummaryLeadGen: (cost, conversions, cpa, cam) =>
+    `He preparado el resumen mensual utilizando los datos reales de la cuenta para este período. El gasto se situó en ${cost} y generó ${conversions} conversiones registradas a ${cpa} de CPA. ${cam ? `${cam} fue la mejor fuente de leads de la cuenta.` : "La cuenta debe juzgarse por el resultado concreto en primer lugar."}`,
+  liveSummaryGrowth: (clicks, ctr, cpc, cam) =>
+    `He preparado el resumen mensual utilizando los datos reales de la cuenta para este período. La cuenta generó ${clicks} clics con un CTR del ${ctr} manteniendo el CPC en ${cpc}. ${cam ? `${cam} mantuvo el mayor impulso.` : "Este mes debe juzgarse por la calidad del tráfico y el alcance eficiente."}`,
+
+  liveTakeaway1Ecom: (roas, cost) => `ROAS en ${roas}x con ${cost} de gasto`,
+  liveTakeaway2Ecom: (conversions, convValue) => `${conversions} conversiones registradas por valor de ${convValue}`,
+  liveTakeaway3Ecom: (cam) => cam ? `${cam} lideró la cuenta en retorno` : "La eficiencia se concentró en una pequeña parte de la cuenta",
+  liveTakeaway1LeadGen: (conversions) => `${conversions} conversiones registradas`,
+  liveTakeaway2LeadGen: (cpa, cost) => `CPA en ${cpa} con ${cost} de gasto`,
+  liveTakeaway3LeadGen: (cam) => cam ? `${cam} logró la mejor eficiencia de leads` : "La calidad del lead debe estar por delante del volumen bruto",
+  liveTakeaway1Growth: (clicks, ctr) => `${clicks} clics con ${ctr} de CTR`,
+  liveTakeaway2Growth: (cpc, cost) => `CPC en ${cpc} con ${cost} de gasto`,
+  liveTakeaway3Growth: (cam) => cam ? `${cam} mantuvo el mayor impulso` : "El impulso fue desigual en toda la cuenta",
+
+  liveOpportunitiesEcom: (kw) =>
+    `La oportunidad más clara es trasladar más peso hacia las campañas y temas de búsqueda que ya están convirtiendo, mientras se reduce la exposición en campañas que aún gastan sin retorno.${kw ? ` ${kw} es una de las señales de demanda probadas más fuertes de la cuenta.` : ""}`.trim(),
+  liveOpportunitiesLeadGen: (cam) =>
+    `La oportunidad más clara es concentrar el presupuesto en las campañas que ya producen conversiones de forma eficiente, mientras se reduce la cobertura más amplia que consume gasto sin suficiente producción.${cam ? ` ${cam} es la primera área a revisar.` : ""}`.trim(),
+  liveOpportunitiesGrowth: (cam) =>
+    `La oportunidad más clara es mantener activos los temas de demanda más fuertes mientras se eliminan ubicaciones y segmentos de campaña que añaden gasto sin respuesta suficiente.${cam ? ` ${cam} es la primera área a revisar.` : ""}`.trim(),
+
+  addRecommendation: "Añadir acción",
+  regenerateRecommendations: "Regenerar acciones",
+  regeneratingRecs: "Regenerando…",
+  deleteRec: "Eliminar",
+  recTitle: "Título de la acción",
+  recWhy: "Por qué importa",
+  recImpact: "Impacto esperado",
+  noRecs: "No hay acciones recomendadas aún.",
 };
 
 const nl: ReportTranslations = {
@@ -777,6 +940,39 @@ const nl: ReportTranslations = {
   tooltipConversions: "Conversies",
   tooltipSpendShare: "Budgetaandeel",
   tooltipShare: "Aandeel",
+
+  liveSummaryEcom: (cost, convValue, roas, cam) =>
+    `Ik heb het maandelijkse overzicht opgesteld op basis van de werkelijke accountgegevens voor deze periode. Het budget bedroeg ${cost} en genereerde ${convValue} aan gevolgde waarde bij een ROAS van ${roas}x. ${cam ? `${cam} was de sterkste efficiëntiedriver in het account.` : "Deze maand moet worden beoordeeld op rendement, niet alleen op volume."}`,
+  liveSummaryLeadGen: (cost, conversions, cpa, cam) =>
+    `Ik heb het maandelijkse overzicht opgesteld op basis van de werkelijke accountgegevens voor deze periode. Het budget bedroeg ${cost} en genereerde ${conversions} gevolgde conversies bij een CPA van ${cpa}. ${cam ? `${cam} was de sterkste leadbron in het account.` : "Het account moet primair op harde output worden beoordeeld."}`,
+  liveSummaryGrowth: (clicks, ctr, cpc, cam) =>
+    `Ik heb het maandelijkse overzicht opgesteld op basis van de werkelijke accountgegevens voor deze periode. Het account leverde ${clicks} klikken bij een CTR van ${ctr} en hield de CPC op ${cpc}. ${cam ? `${cam} had het sterkste momentum.` : "Deze maand moet worden beoordeeld op verkeerskwaliteit en efficiënt bereik."}`,
+
+  liveTakeaway1Ecom: (roas, cost) => `ROAS op ${roas}x bij ${cost} budget`,
+  liveTakeaway2Ecom: (conversions, convValue) => `${conversions} gevolgde conversies ter waarde van ${convValue}`,
+  liveTakeaway3Ecom: (cam) => cam ? `${cam} leidde het account op rendement` : "De efficiëntie was geconcentreerd in een klein deel van het account",
+  liveTakeaway1LeadGen: (conversions) => `${conversions} gevolgde conversies`,
+  liveTakeaway2LeadGen: (cpa, cost) => `CPA op ${cpa} bij ${cost} budget`,
+  liveTakeaway3LeadGen: (cam) => cam ? `${cam} realiseerde de beste leadefficiëntie` : "Leadkwaliteit moet vóór ruw volume gaan",
+  liveTakeaway1Growth: (clicks, ctr) => `${clicks} klikken bij ${ctr} CTR`,
+  liveTakeaway2Growth: (cpc, cost) => `CPC op ${cpc} bij ${cost} budget`,
+  liveTakeaway3Growth: (cam) => cam ? `${cam} had het sterkste momentum` : "Het momentum was ongelijk verdeeld over het account",
+
+  liveOpportunitiesEcom: (kw) =>
+    `Het grootste potentieel ligt in het verschuiven van meer gewicht naar de campagnes en zoekthema's die al converteren, terwijl de blootstelling aan campagnes die nog steeds zonder rendement uitgeven wordt verminderd.${kw ? ` ${kw} is een van de sterkste bewezen vraag­signalen in het account.` : ""}`.trim(),
+  liveOpportunitiesLeadGen: (cam) =>
+    `Het grootste potentieel ligt in het concentreren van budget op campagnes die al efficiënt converteren, terwijl bredere dekking die budget verbruikt zonder voldoende output wordt gereduceerd.${cam ? ` ${cam} is het eerste gebied om te reviewen.` : ""}`.trim(),
+  liveOpportunitiesGrowth: (cam) =>
+    `Het grootste potentieel ligt in het actief houden van de sterkste vraagthema's terwijl plaatsingen en campagnesegmenten die budget toevoegen zonder voldoende respons worden gekort.${cam ? ` ${cam} is het eerste gebied om te reviewen.` : ""}`.trim(),
+
+  addRecommendation: "Actie toevoegen",
+  regenerateRecommendations: "Acties opnieuw genereren",
+  regeneratingRecs: "Genereren…",
+  deleteRec: "Verwijderen",
+  recTitle: "Actietitel",
+  recWhy: "Waarom het belangrijk is",
+  recImpact: "Verwacht effect",
+  noRecs: "Nog geen aanbevolen acties.",
 };
 
 const it: ReportTranslations = {
@@ -903,6 +1099,39 @@ const it: ReportTranslations = {
   tooltipConversions: "Conversioni",
   tooltipSpendShare: "Quota di spesa",
   tooltipShare: "Quota",
+
+  liveSummaryEcom: (cost, convValue, roas, cam) =>
+    `Ho preparato il riepilogo mensile utilizzando i dati reali dell'account per questo periodo. La spesa si è attestata a ${cost} e ha prodotto ${convValue} di valore tracciato, mantenendo un ROAS di ${roas}x. ${cam ? `${cam} è stato il principale motore di efficienza nell'account.` : "Questo mese deve essere letto attraverso il ritorno, non solo il volume."}`,
+  liveSummaryLeadGen: (cost, conversions, cpa, cam) =>
+    `Ho preparato il riepilogo mensile utilizzando i dati reali dell'account per questo periodo. La spesa si è attestata a ${cost} e ha generato ${conversions} conversioni tracciate a ${cpa} di CPA. ${cam ? `${cam} è stata la migliore fonte di lead nell'account.` : "L'account deve essere giudicato principalmente sull'output concreto."}`,
+  liveSummaryGrowth: (clicks, ctr, cpc, cam) =>
+    `Ho preparato il riepilogo mensile utilizzando i dati reali dell'account per questo periodo. L'account ha generato ${clicks} clic con un CTR del ${ctr} mantenendo il CPC a ${cpc}. ${cam ? `${cam} ha avuto il momentum più forte.` : "Questo mese deve essere valutato sulla qualità del traffico e la portata efficiente."}`,
+
+  liveTakeaway1Ecom: (roas, cost) => `ROAS a ${roas}x su ${cost} di spesa`,
+  liveTakeaway2Ecom: (conversions, convValue) => `${conversions} conversioni tracciate per un valore di ${convValue}`,
+  liveTakeaway3Ecom: (cam) => cam ? `${cam} ha guidato l'account sul rendimento` : "L'efficienza era concentrata in una piccola parte dell'account",
+  liveTakeaway1LeadGen: (conversions) => `${conversions} conversioni tracciate`,
+  liveTakeaway2LeadGen: (cpa, cost) => `CPA a ${cpa} su ${cost} di spesa`,
+  liveTakeaway3LeadGen: (cam) => cam ? `${cam} ha creato la migliore efficienza di lead` : "La qualità dei lead deve precedere il volume grezzo",
+  liveTakeaway1Growth: (clicks, ctr) => `${clicks} clic a ${ctr} di CTR`,
+  liveTakeaway2Growth: (cpc, cost) => `CPC a ${cpc} su ${cost} di spesa`,
+  liveTakeaway3Growth: (cam) => cam ? `${cam} ha avuto il momentum più forte` : "Il momentum era irregolare nell'account",
+
+  liveOpportunitiesEcom: (kw) =>
+    `Il potenziale più chiaro è spostare più peso verso le campagne e i temi di ricerca che già convertono, riducendo l'esposizione nelle campagne che ancora spendono senza rendimento.${kw ? ` ${kw} è uno dei segnali di domanda più forti e consolidati nell'account.` : ""}`.trim(),
+  liveOpportunitiesLeadGen: (cam) =>
+    `Il potenziale più chiaro è concentrare il budget sulle campagne che già producono conversioni in modo efficiente, riducendo la copertura più ampia che consuma spesa senza output sufficiente.${cam ? ` ${cam} è la prima area da esaminare.` : ""}`.trim(),
+  liveOpportunitiesGrowth: (cam) =>
+    `Il potenziale più chiaro è mantenere attivi i temi di domanda più forti eliminando posizionamenti e segmenti di campagna che aggiungono spesa senza una risposta adeguata.${cam ? ` ${cam} è la prima area da esaminare.` : ""}`.trim(),
+
+  addRecommendation: "Aggiungi azione",
+  regenerateRecommendations: "Rigenera azioni",
+  regeneratingRecs: "Rigenerazione…",
+  deleteRec: "Elimina",
+  recTitle: "Titolo dell'azione",
+  recWhy: "Perché è importante",
+  recImpact: "Impatto previsto",
+  noRecs: "Nessuna azione raccomandata ancora.",
 };
 
 const pt: ReportTranslations = {
@@ -1029,6 +1258,39 @@ const pt: ReportTranslations = {
   tooltipConversions: "Conversões",
   tooltipSpendShare: "Participação do gasto",
   tooltipShare: "Participação",
+
+  liveSummaryEcom: (cost, convValue, roas, cam) =>
+    `Preparei o resumo mensal utilizando os dados reais da conta para este período. O gasto ficou em ${cost} e gerou ${convValue} em valor rastreado, mantendo um ROAS de ${roas}x. ${cam ? `${cam} foi o principal motor de eficiência da conta.` : "Este mês deve ser lido pelo retorno, não apenas pelo volume."}`,
+  liveSummaryLeadGen: (cost, conversions, cpa, cam) =>
+    `Preparei o resumo mensal utilizando os dados reais da conta para este período. O gasto ficou em ${cost} e gerou ${conversions} conversões rastreadas a ${cpa} de CPA. ${cam ? `${cam} foi a melhor fonte de leads da conta.` : "A conta deve ser avaliada principalmente pelo resultado concreto."}`,
+  liveSummaryGrowth: (clicks, ctr, cpc, cam) =>
+    `Preparei o resumo mensal utilizando os dados reais da conta para este período. A conta entregou ${clicks} cliques com um CTR de ${ctr} mantendo o CPC em ${cpc}. ${cam ? `${cam} manteve o maior momentum.` : "Este mês deve ser avaliado pela qualidade do tráfego e alcance eficiente."}`,
+
+  liveTakeaway1Ecom: (roas, cost) => `ROAS em ${roas}x com ${cost} de gasto`,
+  liveTakeaway2Ecom: (conversions, convValue) => `${conversions} conversões rastreadas no valor de ${convValue}`,
+  liveTakeaway3Ecom: (cam) => cam ? `${cam} liderou a conta em retorno` : "A eficiência estava concentrada em uma pequena parte da conta",
+  liveTakeaway1LeadGen: (conversions) => `${conversions} conversões rastreadas`,
+  liveTakeaway2LeadGen: (cpa, cost) => `CPA em ${cpa} com ${cost} de gasto`,
+  liveTakeaway3LeadGen: (cam) => cam ? `${cam} criou a melhor eficiência de leads` : "A qualidade do lead deve estar à frente do volume bruto",
+  liveTakeaway1Growth: (clicks, ctr) => `${clicks} cliques com ${ctr} de CTR`,
+  liveTakeaway2Growth: (cpc, cost) => `CPC em ${cpc} com ${cost} de gasto`,
+  liveTakeaway3Growth: (cam) => cam ? `${cam} manteve o maior momentum` : "O momentum foi desigual na conta",
+
+  liveOpportunitiesEcom: (kw) =>
+    `A oportunidade mais clara é transferir mais peso para as campanhas e temas de pesquisa que já estão convertendo, enquanto se reduz a exposição nas campanhas que ainda gastam sem retorno.${kw ? ` ${kw} é um dos sinais de demanda mais fortes e comprovados da conta.` : ""}`.trim(),
+  liveOpportunitiesLeadGen: (cam) =>
+    `A oportunidade mais clara é concentrar o orçamento nas campanhas que já produzem conversões de forma eficiente, enquanto se reduz a cobertura mais ampla que consome gasto sem produção suficiente.${cam ? ` ${cam} é a primeira área a revisar.` : ""}`.trim(),
+  liveOpportunitiesGrowth: (cam) =>
+    `A oportunidade mais clara é manter ativos os temas de demanda mais fortes enquanto se eliminam posicionamentos e segmentos de campanha que adicionam gasto sem resposta suficiente.${cam ? ` ${cam} é a primeira área a revisar.` : ""}`.trim(),
+
+  addRecommendation: "Adicionar ação",
+  regenerateRecommendations: "Regenerar ações",
+  regeneratingRecs: "Regenerando…",
+  deleteRec: "Excluir",
+  recTitle: "Título da ação",
+  recWhy: "Por que é importante",
+  recImpact: "Impacto esperado",
+  noRecs: "Nenhuma ação recomendada ainda.",
 };
 
 const TRANSLATIONS: Record<string, ReportTranslations> = { en, de, fr, es, nl, it, pt };
