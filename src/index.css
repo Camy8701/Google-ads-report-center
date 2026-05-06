@@ -391,6 +391,12 @@
   .report-theme [data-exporting-pdf="true"] .pdf-export-hidden {
     display: none !important;
   }
+
+  /* Also hide the sticky toolbar and any other no-print UI during PDF capture */
+  [data-exporting-pdf="true"] .no-print,
+  body[data-exporting-pdf="true"] .no-print {
+    display: none !important;
+  }
 }
 
 /* Tiptap / Notes editor */

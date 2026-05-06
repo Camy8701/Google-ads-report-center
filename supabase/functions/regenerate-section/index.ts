@@ -53,8 +53,14 @@ Top campaigns: ${JSON.stringify(m.top_campaigns?.slice(0, 3) || [])}.
 ${notes ? `\nClient context notes (use these to explain changes — e.g. budget increases, paused campaigns, new targets):\n${notes}` : ""}
 Avoid generic wrap-up language. Prefer a direct explanation, even if the answer is simply seasonality, auction pressure, or campaign mix.`;
 
-    // Language instruction goes FIRST so the model processes it before any other context
-    const system = `OUTPUT LANGUAGE: ${languageLabel.toUpperCase()}. You must write every word of your response in ${languageLabel}. Do not use any other language under any circumstance.
+    // Recommendations need a completely different system prompt — JSON output, not prose.
+    // The prose system prompt explicitly says "no markdown" which makes the model return
+    // plain text instead of the JSON array we need.
+    const isRecommendations = section_kind === "recommendations";
+
+    const system = isRecommendations
+      ? `You are a senior performance marketing strategist. OUTPUT LANGUAGE: ${languageLabel.toUpperCase()}. Write every field value in ${languageLabel}. Return ONLY raw JSON — no markdown, no code fences, no explanation before or after the JSON.`
+      : `OUTPUT LANGUAGE: ${languageLabel.toUpperCase()}. You must write every word of your response in ${languageLabel}. Do not use any other language under any circumstance.
 
 You are a senior performance marketing strategist writing the monthly Google Ads report for LYNCK Studio.
 Voice: sharp, premium, first-person ("I" in ${languageLabel}), constructive, never accusatory. Frame issues as opportunities.

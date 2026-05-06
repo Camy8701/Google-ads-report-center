@@ -400,6 +400,9 @@ export default function ReportView() {
   const [regeneratingRecs, setRegeneratingRecs] = useState(false);
   const [historicalTimeline, setHistoricalTimeline] = useState<any[]>([]);
   const [clientNotes, setClientNotes] = useState<any[]>([]);
+  // Tracks whether the user has explicitly saved/regenerated recs in this session.
+  // Used to override stale English recs in Supabase for non-English clients.
+  const [recsExplicitlySaved, setRecsExplicitlySaved] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
 
   const exportPdf = async () => {
@@ -411,6 +414,8 @@ export default function ReportView() {
       // Close any open edit states so no inputs appear in the PDF
       setEditingRecs({});
       setEditing({});
+      // Set on both body and reportRef so the sticky nav (outside reportRef) is also hidden
+      document.body.setAttribute("data-exporting-pdf", "true");
       reportRef.current.setAttribute("data-exporting-pdf", "true");
       // Give the DOM two frames to settle after hiding editing UI + orb animations
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
@@ -438,27 +443,37 @@ export default function ReportView() {
       const ignoreEl = (el: Element) =>
         el.classList.contains("no-print") || el.classList.contains("pdf-export-hidden");
 
+      // Fix for html2canvas ß crash:
+      // CSS text-transform:uppercase maps ß→SS (1 char → 2 chars) so the measured
+      // text length is 1 longer than the DOM text node length. html2canvas calls
+      // Range.setEnd(node, measuredLength) which throws on the shorter node.
+      // Solution: in the clone, disable text-transform and manually uppercase the
+      // text nodes ourselves so DOM length == measured length.
+      const onclone = (clonedDoc: Document, element: HTMLElement) => {
+        const upperEls = element.querySelectorAll<HTMLElement>(
+          '.lynck-section-label, .uppercase, [class*="uppercase"]'
+        );
+        upperEls.forEach((el) => {
+          el.style.textTransform = "none";
+          const walker = clonedDoc.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+          let node: Node | null;
+          while ((node = walker.nextNode())) {
+            if (node.textContent) {
+              node.textContent = node.textContent.toUpperCase();
+            }
+          }
+        });
+      };
+
       for (const block of blocks) {
-        let canvas: HTMLCanvasElement;
-        try {
-          canvas = await html2canvas(block, {
-            scale: 2,
-            useCORS: true,
-            backgroundColor: bg,
-            logging: false,
-            ignoreElements: ignoreEl,
-          });
-        } catch {
-          // Retry at scale 1 — works around html2canvas Range.setEnd crash
-          // triggered by multi-byte characters like ß in German text.
-          canvas = await html2canvas(block, {
-            scale: 1,
-            useCORS: true,
-            backgroundColor: bg,
-            logging: false,
-            ignoreElements: ignoreEl,
-          });
-        }
+        const canvas = await html2canvas(block, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: bg,
+          logging: false,
+          ignoreElements: ignoreEl,
+          onclone,
+        });
         const imgData = canvas.toDataURL("image/png");
         const blockHeightMm = (canvas.height * contentWidthMm) / canvas.width;
 
@@ -511,6 +526,7 @@ export default function ReportView() {
     } catch (e: any) {
       toast.error("Export failed: " + (e?.message || "unknown"));
     } finally {
+      document.body.removeAttribute("data-exporting-pdf");
       reportRef.current?.removeAttribute("data-exporting-pdf");
       setExporting(false);
     }
@@ -686,6 +702,7 @@ export default function ReportView() {
       if (error) return toast.error(error.message);
     }
     setEditingRecs((prev) => { const n = { ...prev }; delete n[rec.id]; return n; });
+    setRecsExplicitlySaved(true);
     toast.success("Saved");
     load();
   };
@@ -735,12 +752,27 @@ export default function ReportView() {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      const parsed: Array<{ title: string; why: string; expected_impact: string; urgency: string }> = data?.recommendations;
-      if (!Array.isArray(parsed) || parsed.length === 0) throw new Error("No recommendations returned");
+      // Newer edge function returns { recommendations: [...] }.
+      // Older deployed versions fall through to { body: "<raw JSON text>" } — parse that as fallback.
+      let parsed: Array<{ title: string; why: string; expected_impact: string; urgency: string }> | null =
+        Array.isArray(data?.recommendations) ? data.recommendations : null;
+      if (!parsed && data?.body) {
+        try {
+          const raw: string = data.body;
+          const start = raw.indexOf("[");
+          const end = raw.lastIndexOf("]");
+          if (start !== -1 && end > start) {
+            const candidate = JSON.parse(raw.slice(start, end + 1));
+            if (Array.isArray(candidate)) parsed = candidate;
+          }
+        } catch { /* ignore parse failure, will throw below */ }
+      }
+      if (!parsed || parsed.length === 0) throw new Error("No recommendations returned");
       await supabase.from("report_recommendations").delete().eq("report_id", id);
       await supabase.from("report_recommendations").insert(
         parsed.map((r, i) => ({ report_id: id, position: i + 1, title: r.title, why: r.why, expected_impact: r.expected_impact, urgency: (r.urgency || "medium") as "good" | "info" | "medium" | "urgent" }))
       );
+      setRecsExplicitlySaved(true);
       toast.success("Recommendations regenerated");
       load();
     } catch (e: any) {
@@ -824,9 +856,13 @@ export default function ReportView() {
   const decisionBody = useLiveDerivedContent
     ? t.decisionBodyLive
     : decision?.body || t.decisionBodyLive;
-  // Prefer supabase-saved recs (user-edited or AI-regenerated) when they exist.
-  // Only fall back to auto-generated live recs when no saved recs are present.
-  const recommendationItems = recs.length > 0 ? recs : liveRecommendations;
+  // For non-English clients, old supabase recs may be stale English content saved
+  // before the language feature existed. Show live translated recs by default
+  // unless the user has explicitly saved/regenerated recs in this session.
+  const recsAreStale = language !== "en" && !recsExplicitlySaved;
+  const recommendationItems = recsAreStale
+    ? liveRecommendations
+    : (recs.length > 0 ? recs : liveRecommendations);
   const heroMetrics = getHeroMetrics(goalFamily, displayMetrics, conversionSplit, t);
   const winners = getCampaignWinners(spendCampaigns, goalFamily);
 
