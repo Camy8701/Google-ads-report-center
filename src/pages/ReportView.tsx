@@ -262,7 +262,12 @@ function isImportedGoogleAdsShape(rawMetrics: MetricsRow) {
   const topKeywords = rawST.length > 0 ? rawST : asArray<any>(rawMetrics.top_keywords);
   const topProducts = asArray<any>(rawMetrics.top_products);
   const topCampaigns = asArray<any>(rawMetrics.top_campaigns);
-  return topKeywords.some((item) => "text" in item) || topProducts.some((item) => "title" in item) || topCampaigns.some((item) => "cost" in item && !("spend" in item));
+  // Detect real synced data: old shape ("text"/"title"/"cost") OR new shape ("source" field from sync, or campaigns with "spend")
+  return (
+    topKeywords.some((item) => "text" in item || "source" in item) ||
+    topProducts.some((item) => "title" in item || "source" in item) ||
+    topCampaigns.some((item) => ("cost" in item && !("spend" in item)) || "spend" in item)
+  );
 }
 
 function buildLiveSummary(reportGoal: ReportGoalFamily, metrics: MetricsRow, topCampaigns: any[], t: ReportTranslations) {
