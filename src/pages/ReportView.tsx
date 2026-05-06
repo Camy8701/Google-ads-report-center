@@ -392,7 +392,13 @@ export default function ReportView() {
     if (!reportRef.current) return;
     setExporting(true);
     try {
+      // Clear any browser text selections — stale Range objects crash html2canvas
+      window.getSelection()?.removeAllRanges();
+      // Close any open edit states so no inputs appear in the PDF
+      setEditingRecs({});
+      setEditing({});
       reportRef.current.setAttribute("data-exporting-pdf", "true");
+      // Give the DOM two frames to settle after hiding editing UI + orb animations
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
       const pdf = new jsPDF("p", "mm", "a4");
@@ -777,7 +783,9 @@ export default function ReportView() {
   );
   const conversionSplit = asArray<any>(summaryData.conversionSplit);
   const leadActions = asArray<any>(summaryData.leadActions);
-  const driverCards = useLiveDerivedContent && !whatChanged?.data?.manual_override
+  // When real Google Ads data is connected, always use live drivers (translated).
+  // Only fall back to stored data.drivers when using mock/manual data.
+  const driverCards = useLiveDerivedContent
     ? asArray<any>(liveWhatChanged?.drivers)
     : asArray<any>(whatChanged?.data?.drivers);
   const opportunitiesBody = useLiveDerivedContent ? liveOpportunities || opportunities?.body || "" : opportunities?.body || "";
@@ -1387,8 +1395,8 @@ function WinnerCard({ title, campaign, goal, inverse = false, t }: { title: stri
       <h3 className="font-display text-2xl font-bold">{campaign.name}</h3>
       <div className="mt-4 grid grid-cols-3 gap-3">
         <MiniStat label={t.miniStatSpend} value={fmtMoney(campaign.spend)} />
-        <MiniStat label={goal === "ecommerce" ? t.miniStatRoas : t.miniStatConv} value={goal === "ecommerce" ? `${campaign.roas.toFixed(2)}x` : fmtNum(campaign.conversions)} />
-        <MiniStat label={goal === "ecommerce" ? t.miniStatDelta : t.miniStatCpa} value={goal === "ecommerce" ? `${campaign.delta > 0 ? "+" : ""}${campaign.delta}%` : fmtMoney(campaign.cpa)} tone={inverse ? "warn" : "good"} />
+        <MiniStat label={t.miniStatRoas} value={goal === "ecommerce" ? `${Number(campaign.roas).toFixed(2)}x` : fmtNum(campaign.conversions)} />
+        <MiniStat label={t.metricConversions} value={fmtNum(campaign.conversions)} tone={inverse ? "warn" : "good"} />
       </div>
     </div>
   );
