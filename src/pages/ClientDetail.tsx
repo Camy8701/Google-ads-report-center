@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { fmtDate, fmtMonthShort } from "@/lib/format";
-import { ArrowLeft, Save, FileText, Mail, Building2, RefreshCw, NotebookText, ArrowUpRight } from "lucide-react";
+import { ArrowLeft, Save, FileText, Mail, Building2, RefreshCw, NotebookText, ArrowUpRight, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { getBusinessTypeLabel, getClientReportGoal, getClientLanguage, getReportGoalLabel, getVisibleBrandNotes, withReportGoalMeta, type ReportGoal } from "@/lib/reportGoal";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
