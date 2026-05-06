@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { fmtDate, fmtMonthShort } from "@/lib/format";
-import { ArrowLeft, Save, FileText, Mail, Building2, RefreshCw, NotebookText, ArrowUpRight } from "lucide-react";
+import { ArrowLeft, Save, FileText, Mail, Building2, RefreshCw, NotebookText, ArrowUpRight, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { getBusinessTypeLabel, getClientReportGoal, getClientLanguage, getReportGoalLabel, getVisibleBrandNotes, withReportGoalMeta, type ReportGoal } from "@/lib/reportGoal";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -272,6 +272,20 @@ export default function ClientDetail() {
                   <Button size="sm" variant="outline" disabled={syncingAccountId === a.id} onClick={() => runSync(a.id)}>
                     <RefreshCw className={`size-3.5 mr-1.5 ${syncingAccountId === a.id ? "animate-spin" : ""}`} />
                     {syncingAccountId === a.id ? "Syncing…" : "Sync"}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-destructive hover:text-destructive"
+                    onClick={async () => {
+                      if (!confirm(`Remove "${a.label || "this account"}"? This cannot be undone.`)) return;
+                      const { error } = await supabase.from("ad_accounts").delete().eq("id", a.id);
+                      if (error) return toast.error(error.message);
+                      toast.success("Account removed");
+                      load();
+                    }}
+                  >
+                    <Trash2 className="size-3.5" />
                   </Button>
                 </div>
               </li>

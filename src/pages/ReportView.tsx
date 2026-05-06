@@ -262,7 +262,12 @@ function isImportedGoogleAdsShape(rawMetrics: MetricsRow) {
   const topKeywords = rawST.length > 0 ? rawST : asArray<any>(rawMetrics.top_keywords);
   const topProducts = asArray<any>(rawMetrics.top_products);
   const topCampaigns = asArray<any>(rawMetrics.top_campaigns);
-  return topKeywords.some((item) => "text" in item) || topProducts.some((item) => "title" in item) || topCampaigns.some((item) => "cost" in item && !("spend" in item));
+  // Detect real synced data: old shape ("text"/"title"/"cost") OR new shape ("source" field from sync, or campaigns with "spend")
+  return (
+    topKeywords.some((item) => "text" in item || "source" in item) ||
+    topProducts.some((item) => "title" in item || "source" in item) ||
+    topCampaigns.some((item) => ("cost" in item && !("spend" in item)) || "spend" in item)
+  );
 }
 
 function buildLiveSummary(reportGoal: ReportGoalFamily, metrics: MetricsRow, topCampaigns: any[], t: ReportTranslations) {
@@ -650,7 +655,7 @@ export default function ReportView() {
         title: edits.title,
         why: edits.why,
         expected_impact: edits.expected_impact,
-        urgency: edits.urgency,
+        urgency: edits.urgency as "good" | "info" | "medium" | "urgent",
       }).eq("id", rec.id);
       if (error) return toast.error(error.message);
     }
@@ -707,7 +712,7 @@ export default function ReportView() {
       if (!Array.isArray(parsed) || parsed.length === 0) throw new Error("No recommendations returned");
       await supabase.from("report_recommendations").delete().eq("report_id", id);
       await supabase.from("report_recommendations").insert(
-        parsed.map((r, i) => ({ report_id: id, position: i + 1, title: r.title, why: r.why, expected_impact: r.expected_impact, urgency: r.urgency || "medium" }))
+        parsed.map((r, i) => ({ report_id: id, position: i + 1, title: r.title, why: r.why, expected_impact: r.expected_impact, urgency: (r.urgency || "medium") as "good" | "info" | "medium" | "urgent" }))
       );
       toast.success("Recommendations regenerated");
       load();
