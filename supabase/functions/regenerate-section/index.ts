@@ -91,14 +91,18 @@ Keep copy tight — used in live calls. No headings, no bullet points, no markdo
     // For recommendations, parse JSON array and return structured data
     if (section_kind === "recommendations") {
       try {
-        // Strip any accidental markdown code fences
-        const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
-        const recommendations = JSON.parse(cleaned);
-        if (!Array.isArray(recommendations)) throw new Error("Not an array");
+        // Extract the JSON array — find first '[' and last ']' to survive any
+        // preamble or postamble the model adds around the JSON block.
+        const start = raw.indexOf("[");
+        const end = raw.lastIndexOf("]");
+        if (start === -1 || end === -1 || end <= start) throw new Error("No JSON array found");
+        const extracted = raw.slice(start, end + 1);
+        const recommendations = JSON.parse(extracted);
+        if (!Array.isArray(recommendations) || recommendations.length === 0) throw new Error("Empty or non-array");
         return new Response(JSON.stringify({ recommendations }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      } catch {
-        console.error("Failed to parse recommendations JSON:", raw);
-        return new Response(JSON.stringify({ error: "Invalid recommendations format from AI" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      } catch (parseErr) {
+        console.error("Failed to parse recommendations JSON:", raw, parseErr);
+        return new Response(JSON.stringify({ error: "Invalid recommendations format from AI" }), { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
     }
 

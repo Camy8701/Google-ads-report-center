@@ -348,7 +348,7 @@ function buildLiveOpportunities(reportGoal: ReportGoalFamily, topCampaigns: any[
   return t.liveOpportunitiesGrowth(weakCampaign?.name);
 }
 
-function buildLiveRecommendations(reportGoal: ReportGoalFamily, topCampaigns: any[], topKeywords: any[], topProducts: any[]) {
+function buildLiveRecommendations(reportGoal: ReportGoalFamily, topCampaigns: any[], topKeywords: any[], topProducts: any[], t: ReportTranslations) {
   const sortedCampaigns = [...topCampaigns].sort((a, b) => (reportGoal === "ecommerce" ? (b.roas || 0) - (a.roas || 0) : (b.conversions || 0) - (a.conversions || 0)));
   const bestCampaign = sortedCampaigns[0];
   const weakestCampaign = [...sortedCampaigns].reverse().find((item) => (item.spend || 0) > 0) || sortedCampaigns[sortedCampaigns.length - 1];
@@ -359,29 +359,27 @@ function buildLiveRecommendations(reportGoal: ReportGoalFamily, topCampaigns: an
     {
       id: "live-rec-1",
       position: 1,
-      title: bestCampaign ? `Weight more spend toward ${bestCampaign.name}` : "Weight more spend toward the strongest campaign",
-      why: bestCampaign ? `${bestCampaign.name} is currently doing the best efficiency work in the account.` : "A small part of the account is carrying most of the performance.",
-      expected_impact: reportGoal === "ecommerce" ? "Protect return while scaling qualified revenue." : "Improve output without raising blended cost too quickly.",
+      title: t.liveRec1Title(bestCampaign?.name),
+      why: t.liveRec1Why(bestCampaign?.name),
+      expected_impact: reportGoal === "ecommerce" ? t.liveRec1ImpactEcom : t.liveRec1ImpactOther,
       urgency: "medium",
     },
     {
       id: "live-rec-2",
       position: 2,
-      title: weakestCampaign ? `Review or trim ${weakestCampaign.name}` : "Review weaker spend pockets",
-      why: weakestCampaign ? `${weakestCampaign.name} is absorbing spend with lower contribution than the rest of the account.` : "Lower-quality spend pockets should not keep the same budget priority.",
-      expected_impact: "Reduce waste and make the next month easier to read and optimize.",
+      title: t.liveRec2Title(weakestCampaign?.name),
+      why: t.liveRec2Why(weakestCampaign?.name),
+      expected_impact: t.liveRec2Impact,
       urgency: "medium",
     },
     {
       id: "live-rec-3",
       position: 3,
       title: reportGoal === "ecommerce"
-        ? `Expand around ${bestProduct?.name || bestKeyword?.term || "the strongest product/query set"}`
-        : `Expand around ${bestKeyword?.term || "the strongest search themes"}`,
-      why: reportGoal === "ecommerce"
-        ? "The strongest product and search demand pockets are already proving where intent sits."
-        : "The best converting search themes are the cleanest expansion path.",
-      expected_impact: "Improve concentration around proven demand instead of scaling broadly.",
+        ? t.liveRec3TitleEcom(bestProduct?.name || bestKeyword?.term)
+        : t.liveRec3TitleOther(bestKeyword?.term),
+      why: reportGoal === "ecommerce" ? t.liveRec3WhyEcom : t.liveRec3WhyOther,
+      expected_impact: t.liveRec3Impact,
       urgency: "good",
     },
   ];
@@ -736,6 +734,7 @@ export default function ReportView() {
         },
       });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       const parsed: Array<{ title: string; why: string; expected_impact: string; urgency: string }> = data?.recommendations;
       if (!Array.isArray(parsed) || parsed.length === 0) throw new Error("No recommendations returned");
       await supabase.from("report_recommendations").delete().eq("report_id", id);
@@ -799,7 +798,7 @@ export default function ReportView() {
   const liveSummary = useLiveDerivedContent ? buildLiveSummary(goalFamily, displayMetrics, spendCampaigns, t) : null;
   const liveWhatChanged = buildLiveWhatChanged(goalFamily, displayMetrics, t);
   const liveOpportunities = useLiveDerivedContent ? buildLiveOpportunities(goalFamily, spendCampaigns, topKeywords, t) : null;
-  const liveRecommendations = useLiveDerivedContent ? buildLiveRecommendations(goalFamily, spendCampaigns, topKeywords, topProducts) : [];
+  const liveRecommendations = useLiveDerivedContent ? buildLiveRecommendations(goalFamily, spendCampaigns, topKeywords, topProducts, t) : [];
   const summaryBody = useLiveDerivedContent ? liveSummary?.body || summary?.body || "" : summary?.body || "";
   const takeaways: string[] = useLiveDerivedContent
     ? asArray<string>(liveSummary?.takeaways)
@@ -825,7 +824,9 @@ export default function ReportView() {
   const decisionBody = useLiveDerivedContent
     ? t.decisionBodyLive
     : decision?.body || t.decisionBodyLive;
-  const recommendationItems = useLiveDerivedContent ? liveRecommendations : recs;
+  // Prefer supabase-saved recs (user-edited or AI-regenerated) when they exist.
+  // Only fall back to auto-generated live recs when no saved recs are present.
+  const recommendationItems = recs.length > 0 ? recs : liveRecommendations;
   const heroMetrics = getHeroMetrics(goalFamily, displayMetrics, conversionSplit, t);
   const winners = getCampaignWinners(spendCampaigns, goalFamily);
 

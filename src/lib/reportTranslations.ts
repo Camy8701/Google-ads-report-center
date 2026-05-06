@@ -202,6 +202,20 @@ export interface ReportTranslations {
   recWhy: string;
   recImpact: string;
   noRecs: string;
+
+  // Live recommendation templates (buildLiveRecommendations)
+  liveRec1Title: (name?: string) => string;
+  liveRec1Why: (name?: string) => string;
+  liveRec1ImpactEcom: string;
+  liveRec1ImpactOther: string;
+  liveRec2Title: (name?: string) => string;
+  liveRec2Why: (name?: string) => string;
+  liveRec2Impact: string;
+  liveRec3TitleEcom: (name?: string) => string;
+  liveRec3TitleOther: (name?: string) => string;
+  liveRec3WhyEcom: string;
+  liveRec3WhyOther: string;
+  liveRec3Impact: string;
 }
 
 const en: ReportTranslations = {
@@ -372,6 +386,19 @@ const en: ReportTranslations = {
   recWhy: "Why it matters",
   recImpact: "Expected impact",
   noRecs: "No recommended actions yet.",
+
+  liveRec1Title: (name) => name ? `Weight more spend toward ${name}` : "Weight more spend toward the strongest campaign",
+  liveRec1Why: (name) => name ? `${name} is currently doing the best efficiency work in the account.` : "A small part of the account is carrying most of the performance.",
+  liveRec1ImpactEcom: "Protect return while scaling qualified revenue.",
+  liveRec1ImpactOther: "Improve output without raising blended cost too quickly.",
+  liveRec2Title: (name) => name ? `Review or trim ${name}` : "Review weaker spend pockets",
+  liveRec2Why: (name) => name ? `${name} is absorbing spend with lower contribution than the rest of the account.` : "Lower-quality spend pockets should not keep the same budget priority.",
+  liveRec2Impact: "Reduce waste and make the next month easier to read and optimize.",
+  liveRec3TitleEcom: (name) => `Expand around ${name || "the strongest product/query set"}`,
+  liveRec3TitleOther: (name) => `Expand around ${name || "the strongest search themes"}`,
+  liveRec3WhyEcom: "The strongest product and search demand pockets are already proving where intent sits.",
+  liveRec3WhyOther: "The best converting search themes are the cleanest expansion path.",
+  liveRec3Impact: "Improve concentration around proven demand instead of scaling broadly.",
 };
 
 const de: ReportTranslations = {
@@ -542,6 +569,19 @@ const de: ReportTranslations = {
   recWhy: "Warum es wichtig ist",
   recImpact: "Erwartete Wirkung",
   noRecs: "Noch keine empfohlenen Maßnahmen.",
+
+  liveRec1Title: (name) => name ? `Budget stärker auf ${name} ausrichten` : "Budget stärker auf die stärkste Kampagne ausrichten",
+  liveRec1Why: (name) => name ? `${name} erzielt derzeit die beste Effizienz im Konto.` : "Ein kleiner Teil des Kontos trägt den Großteil der Performance.",
+  liveRec1ImpactEcom: "Return sichern und gleichzeitig qualifizierten Umsatz skalieren.",
+  liveRec1ImpactOther: "Output steigern, ohne den Gesamt-CPC zu schnell zu erhöhen.",
+  liveRec2Title: (name) => name ? `${name} überprüfen oder reduzieren` : "Schwächere Budget-Bereiche überprüfen",
+  liveRec2Why: (name) => name ? `${name} verbraucht Budget mit geringerem Beitrag als der Rest des Kontos.` : "Schwächere Budget-Bereiche sollten keine gleiche Priorität haben.",
+  liveRec2Impact: "Streuverluste reduzieren und den nächsten Monat leichter lesbar und optimierbar machen.",
+  liveRec3TitleEcom: (name) => `Rund um ${name || "das stärkste Produkt/die stärksten Suchanfragen"} ausweiten`,
+  liveRec3TitleOther: (name) => `Rund um ${name || "die stärksten Suchthemen"} ausweiten`,
+  liveRec3WhyEcom: "Das stärkste Produkt und die stärksten Suchanfragen zeigen bereits, wo die Kaufabsicht liegt.",
+  liveRec3WhyOther: "Die am besten konvertierenden Suchthemen bieten den saubersten Expansionspfad.",
+  liveRec3Impact: "Konzentration auf bewährte Nachfrage verbessern statt breit zu skalieren.",
 };
 
 const fr: ReportTranslations = {
@@ -712,6 +752,19 @@ const fr: ReportTranslations = {
   recWhy: "Pourquoi c'est important",
   recImpact: "Impact attendu",
   noRecs: "Aucune action recommandée pour l'instant.",
+
+  liveRec1Title: (name) => name ? `Concentrer davantage le budget sur ${name}` : "Concentrer davantage le budget sur la campagne la plus performante",
+  liveRec1Why: (name) => name ? `${name} réalise actuellement le meilleur travail d'efficacité du compte.` : "Une petite partie du compte porte l'essentiel de la performance.",
+  liveRec1ImpactEcom: "Protéger le retour tout en scalant le chiffre d'affaires qualifié.",
+  liveRec1ImpactOther: "Améliorer les résultats sans augmenter trop rapidement le coût global.",
+  liveRec2Title: (name) => name ? `Examiner ou réduire ${name}` : "Examiner les zones de dépenses moins performantes",
+  liveRec2Why: (name) => name ? `${name} absorbe des dépenses avec une contribution inférieure au reste du compte.` : "Les zones de dépenses moins efficaces ne devraient pas conserver la même priorité budgétaire.",
+  liveRec2Impact: "Réduire le gaspillage et rendre le mois prochain plus facile à analyser et optimiser.",
+  liveRec3TitleEcom: (name) => `Développer autour de ${name || "les produits/requêtes les plus forts"}`,
+  liveRec3TitleOther: (name) => `Développer autour de ${name || "les thèmes de recherche les plus forts"}`,
+  liveRec3WhyEcom: "Les meilleurs produits et les poches de demande montrent déjà où se situe l'intention.",
+  liveRec3WhyOther: "Les thèmes de recherche les mieux convertis sont le chemin d'expansion le plus clair.",
+  liveRec3Impact: "Améliorer la concentration sur la demande prouvée plutôt que de scaler largement.",
 };
 
 const es: ReportTranslations = {
@@ -882,6 +935,19 @@ const es: ReportTranslations = {
   recWhy: "Por qué importa",
   recImpact: "Impacto esperado",
   noRecs: "No hay acciones recomendadas aún.",
+
+  liveRec1Title: (name) => name ? `Concentrar más presupuesto en ${name}` : "Concentrar más presupuesto en la campaña más fuerte",
+  liveRec1Why: (name) => name ? `${name} está realizando actualmente el mejor trabajo de eficiencia en la cuenta.` : "Una pequeña parte de la cuenta lleva la mayor parte del rendimiento.",
+  liveRec1ImpactEcom: "Proteger el retorno mientras se escala el ingreso cualificado.",
+  liveRec1ImpactOther: "Mejorar el output sin aumentar el coste combinado demasiado rápido.",
+  liveRec2Title: (name) => name ? `Revisar o reducir ${name}` : "Revisar las zonas de gasto más débiles",
+  liveRec2Why: (name) => name ? `${name} absorbe gasto con menor contribución que el resto de la cuenta.` : "Las zonas de gasto de menor calidad no deberían mantener la misma prioridad presupuestaria.",
+  liveRec2Impact: "Reducir el desperdicio y hacer el próximo mes más fácil de analizar y optimizar.",
+  liveRec3TitleEcom: (name) => `Expandir alrededor de ${name || "el conjunto de productos/consultas más fuerte"}`,
+  liveRec3TitleOther: (name) => `Expandir alrededor de ${name || "los temas de búsqueda más fuertes"}`,
+  liveRec3WhyEcom: "Los productos más fuertes y las bolsas de demanda ya demuestran dónde está la intención.",
+  liveRec3WhyOther: "Los temas de búsqueda con mejor conversión son el camino de expansión más claro.",
+  liveRec3Impact: "Mejorar la concentración en la demanda probada en lugar de escalar ampliamente.",
 };
 
 const nl: ReportTranslations = {
@@ -1052,6 +1118,19 @@ const nl: ReportTranslations = {
   recWhy: "Waarom het belangrijk is",
   recImpact: "Verwacht effect",
   noRecs: "Nog geen aanbevolen acties.",
+
+  liveRec1Title: (name) => name ? `Meer budget concentreren op ${name}` : "Meer budget concentreren op de sterkste campagne",
+  liveRec1Why: (name) => name ? `${name} levert momenteel het beste efficiëntiewerk in het account.` : "Een klein deel van het account draagt het merendeel van de prestaties.",
+  liveRec1ImpactEcom: "Rendement beschermen terwijl gekwalificeerde omzet wordt geschaald.",
+  liveRec1ImpactOther: "Output verbeteren zonder de gemengde kosten te snel te verhogen.",
+  liveRec2Title: (name) => name ? `${name} herzien of inkrimpen` : "Zwakkere budgetgebieden herzien",
+  liveRec2Why: (name) => name ? `${name} absorbeert budget met een lagere bijdrage dan de rest van het account.` : "Minder efficiënte budgetgebieden mogen niet dezelfde prioriteit houden.",
+  liveRec2Impact: "Verspilling verminderen en de volgende maand gemakkelijker leesbaar en optimaliseerbaar maken.",
+  liveRec3TitleEcom: (name) => `Uitbreiden rondom ${name || "de sterkste producten/zoekopdrachten"}`,
+  liveRec3TitleOther: (name) => `Uitbreiden rondom ${name || "de sterkste zoekthema's"}`,
+  liveRec3WhyEcom: "De sterkste producten en vraagpockets laten al zien waar de koopintentie ligt.",
+  liveRec3WhyOther: "De best converterende zoekthema's zijn het duidelijkste uitbreidingspad.",
+  liveRec3Impact: "Concentratie op bewezen vraag verbeteren in plaats van breed te schalen.",
 };
 
 const it: ReportTranslations = {
@@ -1222,6 +1301,19 @@ const it: ReportTranslations = {
   recWhy: "Perché è importante",
   recImpact: "Impatto previsto",
   noRecs: "Nessuna azione raccomandata ancora.",
+
+  liveRec1Title: (name) => name ? `Concentrare più budget su ${name}` : "Concentrare più budget sulla campagna più forte",
+  liveRec1Why: (name) => name ? `${name} sta attualmente ottenendo i migliori risultati di efficienza nell'account.` : "Una piccola parte dell'account sta portando la maggior parte delle performance.",
+  liveRec1ImpactEcom: "Proteggere il ritorno mentre si scala il fatturato qualificato.",
+  liveRec1ImpactOther: "Migliorare l'output senza aumentare troppo velocemente il costo medio.",
+  liveRec2Title: (name) => name ? `Rivedere o ridurre ${name}` : "Rivedere le aree di spesa più deboli",
+  liveRec2Why: (name) => name ? `${name} assorbe spesa con un contributo inferiore rispetto al resto dell'account.` : "Le aree di spesa meno efficienti non dovrebbero mantenere la stessa priorità di budget.",
+  liveRec2Impact: "Ridurre gli sprechi e rendere il mese successivo più facile da analizzare e ottimizzare.",
+  liveRec3TitleEcom: (name) => `Espandere intorno a ${name || "i prodotti/query più forti"}`,
+  liveRec3TitleOther: (name) => `Espandere intorno a ${name || "i temi di ricerca più forti"}`,
+  liveRec3WhyEcom: "I prodotti più forti e le aree di domanda dimostrano già dove si trova l'intento.",
+  liveRec3WhyOther: "I temi di ricerca con le migliori conversioni sono il percorso di espansione più chiaro.",
+  liveRec3Impact: "Migliorare la concentrazione sulla domanda comprovata invece di scalare ampiamente.",
 };
 
 const pt: ReportTranslations = {
@@ -1392,6 +1484,19 @@ const pt: ReportTranslations = {
   recWhy: "Por que é importante",
   recImpact: "Impacto esperado",
   noRecs: "Nenhuma ação recomendada ainda.",
+
+  liveRec1Title: (name) => name ? `Concentrar mais orçamento em ${name}` : "Concentrar mais orçamento na campanha mais forte",
+  liveRec1Why: (name) => name ? `${name} está atualmente realizando o melhor trabalho de eficiência na conta.` : "Uma pequena parte da conta está carregando a maior parte do desempenho.",
+  liveRec1ImpactEcom: "Proteger o retorno enquanto escala a receita qualificada.",
+  liveRec1ImpactOther: "Melhorar o output sem aumentar o custo combinado muito rapidamente.",
+  liveRec2Title: (name) => name ? `Revisar ou reduzir ${name}` : "Revisar as áreas de gasto mais fracas",
+  liveRec2Why: (name) => name ? `${name} está absorvendo gasto com menor contribuição do que o resto da conta.` : "Áreas de gasto de menor qualidade não devem manter a mesma prioridade de orçamento.",
+  liveRec2Impact: "Reduzir o desperdício e tornar o próximo mês mais fácil de ler e otimizar.",
+  liveRec3TitleEcom: (name) => `Expandir em torno de ${name || "o conjunto de produtos/consultas mais forte"}`,
+  liveRec3TitleOther: (name) => `Expandir em torno de ${name || "os temas de pesquisa mais fortes"}`,
+  liveRec3WhyEcom: "Os produtos mais fortes e as bolsas de demanda já estão provando onde está a intenção.",
+  liveRec3WhyOther: "Os temas de pesquisa com melhor conversão são o caminho de expansão mais claro.",
+  liveRec3Impact: "Melhorar a concentração na demanda comprovada em vez de escalar amplamente.",
 };
 
 const TRANSLATIONS: Record<string, ReportTranslations> = { en, de, fr, es, nl, it, pt };
