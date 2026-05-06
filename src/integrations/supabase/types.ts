@@ -144,6 +144,39 @@ export type Database = {
           },
         ]
       }
+      client_notes: {
+        Row: {
+          client_id: string
+          content: string
+          created_at: string
+          id: string
+          position: number
+          tab_key: string
+          tab_label: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          content?: string
+          created_at?: string
+          id?: string
+          position?: number
+          tab_key: string
+          tab_label: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          position?: number
+          tab_key?: string
+          tab_label?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           archived: boolean
