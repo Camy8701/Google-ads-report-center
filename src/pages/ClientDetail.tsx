@@ -47,11 +47,17 @@ export default function ClientDetail() {
   const save = async () => {
     const { error } = await supabase.from("clients").update({
       name: form.name, business_type: form.business_type, industry: form.industry,
-      website: form.website, brand_notes: withReportGoalMeta(form.brand_notes || "", form.report_goal as ReportGoal), reporting_status: form.reporting_status,
+      website: form.website, brand_notes: withReportGoalMeta(form.brand_notes || "", form.report_goal as ReportGoal),
+      reporting_status: form.reporting_status, language: form.language || "en",
     }).eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Saved");
     setEditing(false); load();
+  };
+
+  const LANGUAGES: Record<string, string> = {
+    en: "🇬🇧 English", de: "🇩🇪 German", fr: "🇫🇷 French",
+    es: "🇪🇸 Spanish", nl: "🇳🇱 Dutch", it: "🇮🇹 Italian", pt: "🇵🇹 Portuguese",
   };
 
   const runSync = async (accountId: string) => {
@@ -112,7 +118,7 @@ export default function ClientDetail() {
           <p className="lynck-section-label mb-3">Brand notes</p>
           {editing ? (
             <div className="space-y-4">
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid md:grid-cols-3 gap-4">
                 <div>
                   <label className="text-[11px] uppercase tracking-[0.15em] lynck-muted mb-1.5 block">Business type</label>
                   <Select value={form.business_type} onValueChange={(v) => setForm({ ...form, business_type: v })}>
@@ -138,6 +144,17 @@ export default function ClientDetail() {
                     </SelectContent>
                   </Select>
                 </div>
+                <div>
+                  <label className="text-[11px] uppercase tracking-[0.15em] lynck-muted mb-1.5 block">Report language</label>
+                  <Select value={form.language || "en"} onValueChange={(v) => setForm({ ...form, language: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(LANGUAGES).map(([code, label]) => (
+                        <SelectItem key={code} value={code}>{label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <Textarea rows={6} value={form.brand_notes || ""} onChange={(e) => setForm({ ...form, brand_notes: e.target.value })} />
             </div>
@@ -154,6 +171,10 @@ export default function ClientDetail() {
           <div>
             <p className="lynck-section-label mb-2">Reporting status</p>
             <StatusBadge variant="reporting" value={client.reporting_status} />
+          </div>
+          <div>
+            <p className="lynck-section-label mb-1">Report language</p>
+            <p className="text-card-body">{LANGUAGES[client.language] || "🇬🇧 English"}</p>
           </div>
           <div>
             <p className="lynck-section-label mb-1">Next due</p>

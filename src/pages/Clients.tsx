@@ -19,7 +19,7 @@ export default function Clients() {
   const [clients, setClients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState<{ name: string; business_type: BusinessType; report_goal: ReportGoal; industry: string; website: string; brand_notes: string; google_ads_customer_id: string; currency: string }>({
+  const [form, setForm] = useState<{ name: string; business_type: BusinessType; report_goal: ReportGoal; industry: string; website: string; brand_notes: string; google_ads_customer_id: string; currency: string; language: string }>({
     name: "",
     business_type: "ecommerce",
     report_goal: "sales",
@@ -28,6 +28,7 @@ export default function Clients() {
     brand_notes: "",
     google_ads_customer_id: "",
     currency: "EUR",
+    language: "en",
   });
 
   const load = async () => {
@@ -46,6 +47,7 @@ export default function Clients() {
       industry: form.industry,
       website: form.website,
       brand_notes: withReportGoalMeta(form.brand_notes, form.report_goal),
+      language: form.language || "en",
     };
     const { data: inserted, error } = await supabase.from("clients").insert([payload as any]).select().single();
     if (error || !inserted) return toast.error(error?.message || "Failed to create client");
@@ -69,7 +71,7 @@ export default function Clients() {
       { client_id: inserted.id, tab_key: "adjustments", tab_label: "Adjustments", content: "", position: 2 },
     ] as any[]);
     setOpen(false);
-    setForm({ name: "", business_type: "ecommerce", report_goal: "sales", industry: "", website: "", brand_notes: "", google_ads_customer_id: "", currency: "EUR" });
+    setForm({ name: "", business_type: "ecommerce", report_goal: "sales", industry: "", website: "", brand_notes: "", google_ads_customer_id: "", currency: "EUR", language: "en" });
     load();
   };
 
@@ -139,6 +141,20 @@ export default function Clients() {
                     />
                   </Field>
                 </div>
+                <Field label="Report language">
+                  <Select value={form.language} onValueChange={(v) => setForm({ ...form, language: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="en">🇬🇧 English</SelectItem>
+                      <SelectItem value="de">🇩🇪 German</SelectItem>
+                      <SelectItem value="fr">🇫🇷 French</SelectItem>
+                      <SelectItem value="es">🇪🇸 Spanish</SelectItem>
+                      <SelectItem value="nl">🇳🇱 Dutch</SelectItem>
+                      <SelectItem value="it">🇮🇹 Italian</SelectItem>
+                      <SelectItem value="pt">🇵🇹 Portuguese</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Field>
                 <Field label="Brand notes">
                   <Textarea rows={4} value={form.brand_notes} onChange={(e) => setForm({ ...form, brand_notes: e.target.value })} placeholder="Tone, voice, KPIs to focus on…" />
                 </Field>

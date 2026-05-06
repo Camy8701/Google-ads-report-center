@@ -590,6 +590,7 @@ export default function ReportView() {
             business_type: client.business_type,
             brand_notes: getVisibleBrandNotes(client.brand_notes),
             report_goal: getClientReportGoal(client.brand_notes, client.business_type),
+            language: client.language || "en",
           },
           period_month: report.period_month,
           metrics: normalizeMetricsForDisplay(metrics),

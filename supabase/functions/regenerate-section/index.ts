@@ -25,6 +25,14 @@ serve(async (req) => {
     const m = metrics || {};
     const p = m.prior || {};
     const reportGoal = client?.report_goal || (isEcom ? "ecommerce" : "lead_gen");
+
+    const LANGUAGE_LABELS: Record<string, string> = {
+      en: "English", de: "German", fr: "French", es: "Spanish",
+      nl: "Dutch", it: "Italian", pt: "Portuguese",
+    };
+    const language = client?.language || "en";
+    const languageLabel = LANGUAGE_LABELS[language] || "English";
+
     const dataSummary = `Client: ${client?.name} (${isEcom ? "ecommerce" : "lead gen"}).
 Reporting goal: ${reportGoal}.
 Brand notes: ${client?.brand_notes || "n/a"}.
@@ -45,7 +53,8 @@ Avoid generic wrap-up language. Prefer a direct explanation, even if the answer 
 
     const system = `You are a senior performance marketing strategist writing the monthly Google Ads report for LYNCK Studio.
 Voice: sharp, premium, first-person ("I"), constructive, never accusatory. Frame issues as opportunities.
-Keep copy tight — used in live calls. No headings, no bullet points, no markdown — only the section paragraph(s) requested.`;
+Keep copy tight — used in live calls. No headings, no bullet points, no markdown — only the section paragraph(s) requested.
+IMPORTANT: Write the entire response in ${languageLabel}. Do not use any other language.`;
 
     const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
