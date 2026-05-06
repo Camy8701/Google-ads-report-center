@@ -2,7 +2,9 @@ export type ReportGoal = "sales" | "leads" | "growth" | "awareness" | "website_t
 export type ReportGoalFamily = "ecommerce" | "lead_gen" | "growth";
 
 const REPORT_GOAL_META = /^\s*<!--\s*report_goal:([a-z_]+)\s*-->\s*/i;
+const LANG_META = /<!--\s*lang:([a-z]{2})\s*-->\s*/ig;
 const VALID_GOALS: ReportGoal[] = ["sales", "leads", "growth", "awareness", "website_traffic"];
+const VALID_LANGS = ["en", "de", "fr", "es", "nl", "it", "pt"];
 
 // Legacy values that may still be persisted in brand_notes meta or elsewhere
 const LEGACY_GOAL_MAP: Record<string, ReportGoal> = {
@@ -39,12 +41,24 @@ export const getClientReportGoal = (brandNotes?: string | null, businessType?: s
   return getDefaultReportGoal(businessType);
 };
 
-export const getVisibleBrandNotes = (brandNotes?: string | null) =>
-  (brandNotes || "").replace(REPORT_GOAL_META, "").trim();
+/** Language stored in brand_notes as <!-- lang:de --> (omitted for default 'en') */
+export const getClientLanguage = (brandNotes?: string | null): string => {
+  const match = (brandNotes || "").match(/<!--\s*lang:([a-z]{2})\s*-->/i);
+  if (match && VALID_LANGS.includes(match[1])) return match[1];
+  return "en";
+};
 
-export const withReportGoalMeta = (brandNotes: string, reportGoal: ReportGoal) => {
+export const getVisibleBrandNotes = (brandNotes?: string | null) =>
+  (brandNotes || "")
+    .replace(REPORT_GOAL_META, "")
+    .replace(/<!--\s*lang:[a-z]{2}\s*-->\s*/ig, "")
+    .trim();
+
+export const withReportGoalMeta = (brandNotes: string, reportGoal: ReportGoal, language?: string): string => {
   const cleanNotes = getVisibleBrandNotes(brandNotes);
-  return `<!-- report_goal:${reportGoal} -->\n${cleanNotes}`.trim();
+  const langTag = language && language !== "en" ? `<!-- lang:${language} -->` : "";
+  const meta = `<!-- report_goal:${reportGoal} -->${langTag}`;
+  return cleanNotes ? `${meta}\n${cleanNotes}` : meta;
 };
 
 export const getBusinessTypeLabel = (businessType?: string | null) => {

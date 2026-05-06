@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, ArrowUpRight } from "lucide-react";
 import { toast } from "sonner";
-import { getBusinessTypeLabel, getClientReportGoal, getDefaultReportGoal, getReportGoalLabel, getVisibleBrandNotes, withReportGoalMeta, type ReportGoal } from "@/lib/reportGoal";
+import { getBusinessTypeLabel, getClientLanguage, getClientReportGoal, getDefaultReportGoal, getReportGoalLabel, getVisibleBrandNotes, withReportGoalMeta, type ReportGoal } from "@/lib/reportGoal";
 
 type BusinessType = "ecommerce" | "lead_gen" | "local_services" | "saas";
 
@@ -46,8 +46,7 @@ export default function Clients() {
       business_type: form.business_type,
       industry: form.industry,
       website: form.website,
-      brand_notes: withReportGoalMeta(form.brand_notes, form.report_goal),
-      language: form.language || "en",
+      brand_notes: withReportGoalMeta(form.brand_notes, form.report_goal, form.language),
     };
     const { data: inserted, error } = await supabase.from("clients").insert([payload as any]).select().single();
     if (error || !inserted) return toast.error(error?.message || "Failed to create client");

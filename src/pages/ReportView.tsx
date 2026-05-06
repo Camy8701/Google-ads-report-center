@@ -6,7 +6,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { fmtMonth, fmtMonthShort, fmtNum, fmtMoney, fmtPct, fmtDate, delta } from "@/lib/format";
-import { getClientReportGoal, getReportGoalLabel, getReportGoalFamily, getVisibleBrandNotes, type ReportGoal, type ReportGoalFamily } from "@/lib/reportGoal";
+import { getClientLanguage, getClientReportGoal, getReportGoalLabel, getReportGoalFamily, getVisibleBrandNotes, type ReportGoal, type ReportGoalFamily } from "@/lib/reportGoal";
 import { ArrowLeft, Save, Sparkles, Printer, CheckCircle2, FileDown, ArrowUp, ArrowDown, Minus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
@@ -590,7 +590,7 @@ export default function ReportView() {
             business_type: client.business_type,
             brand_notes: getVisibleBrandNotes(client.brand_notes),
             report_goal: getClientReportGoal(client.brand_notes, client.business_type),
-            language: client.language || "en",
+            language: getClientLanguage(client.brand_notes),
           },
           period_month: report.period_month,
           metrics: normalizeMetricsForDisplay(metrics),

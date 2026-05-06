@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { fmtDate, fmtMonthShort } from "@/lib/format";
 import { ArrowLeft, Save, FileText, Mail, Building2, RefreshCw, NotebookText, ArrowUpRight } from "lucide-react";
 import { toast } from "sonner";
-import { getBusinessTypeLabel, getClientReportGoal, getReportGoalLabel, getVisibleBrandNotes, withReportGoalMeta, type ReportGoal } from "@/lib/reportGoal";
+import { getBusinessTypeLabel, getClientReportGoal, getClientLanguage, getReportGoalLabel, getVisibleBrandNotes, withReportGoalMeta, type ReportGoal } from "@/lib/reportGoal";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function ClientDetail() {
@@ -40,6 +40,7 @@ export default function ClientDetail() {
       ...(c || {}),
       brand_notes: getVisibleBrandNotes(c?.brand_notes),
       report_goal: getClientReportGoal(c?.brand_notes, c?.business_type),
+      language: getClientLanguage(c?.brand_notes),
     });
   };
   useEffect(() => { load(); }, [id]);
@@ -47,8 +48,9 @@ export default function ClientDetail() {
   const save = async () => {
     const { error } = await supabase.from("clients").update({
       name: form.name, business_type: form.business_type, industry: form.industry,
-      website: form.website, brand_notes: withReportGoalMeta(form.brand_notes || "", form.report_goal as ReportGoal),
-      reporting_status: form.reporting_status, language: form.language || "en",
+      website: form.website,
+      brand_notes: withReportGoalMeta(form.brand_notes || "", form.report_goal as ReportGoal, form.language),
+      reporting_status: form.reporting_status,
     }).eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Saved");
@@ -174,7 +176,7 @@ export default function ClientDetail() {
           </div>
           <div>
             <p className="lynck-section-label mb-1">Report language</p>
-            <p className="text-card-body">{LANGUAGES[client.language] || "🇬🇧 English"}</p>
+            <p className="text-card-body">{LANGUAGES[getClientLanguage(client.brand_notes)] || "🇬🇧 English"}</p>
           </div>
           <div>
             <p className="lynck-section-label mb-1">Next due</p>
