@@ -273,6 +273,20 @@ export default function ClientDetail() {
                     <RefreshCw className={`size-3.5 mr-1.5 ${syncingAccountId === a.id ? "animate-spin" : ""}`} />
                     {syncingAccountId === a.id ? "Syncing…" : "Sync"}
                   </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-destructive hover:text-destructive"
+                    onClick={async () => {
+                      if (!confirm(`Remove "${a.label || "this account"}"? This cannot be undone.`)) return;
+                      const { error } = await supabase.from("ad_accounts").delete().eq("id", a.id);
+                      if (error) return toast.error(error.message);
+                      toast.success("Account removed");
+                      load();
+                    }}
+                  >
+                    <Trash2 className="size-3.5" />
+                  </Button>
                 </div>
               </li>
             ))}
