@@ -1,11 +1,12 @@
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, FileText, Settings as SettingsIcon, Sparkles } from "lucide-react";
+import { LayoutDashboard, Users, FileText, Settings as SettingsIcon, Sparkles, NotebookText } from "lucide-react";
 import { Wordmark } from "./Wordmark";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/clients", label: "Clients", icon: Users },
   { to: "/reports", label: "Reports", icon: FileText },
+  { to: "/notes", label: "Notes", icon: NotebookText },
   { to: "/settings", label: "Settings", icon: SettingsIcon },
 ];
 

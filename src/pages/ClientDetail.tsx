@@ -8,8 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { fmtDate, fmtMonthShort } from "@/lib/format";
-import { ArrowLeft, Save, FileText, Mail, Building2, RefreshCw, Plus, X } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { ArrowLeft, Save, FileText, Mail, Building2, RefreshCw, NotebookText, ArrowUpRight } from "lucide-react";
 import { toast } from "sonner";
 import { getBusinessTypeLabel, getClientReportGoal, getReportGoalLabel, getVisibleBrandNotes, withReportGoalMeta, type ReportGoal } from "@/lib/reportGoal";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -27,12 +26,6 @@ export default function ClientDetail() {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   });
   const [syncingAccountId, setSyncingAccountId] = useState<string | null>(null);
-  const [notes, setNotes] = useState<any[]>([]);
-  const [noteContent, setNoteContent] = useState<Record<string, string>>({});
-  const [noteDirty, setNoteDirty] = useState<Record<string, boolean>>({});
-  const [noteSaving, setNoteSaving] = useState<string | null>(null);
-  const [addingTab, setAddingTab] = useState(false);
-  const [newTabLabel, setNewTabLabel] = useState("");
 
   const load = async () => {
     if (!id) return;
@@ -43,16 +36,6 @@ export default function ClientDetail() {
       supabase.from("reports").select("*").eq("client_id", id).order("period_month", { ascending: false }),
     ]);
     setClient(c); setContacts(ct || []); setAccounts(ac || []); setReports(rp || []);
-    const { data: n } = await supabase
-      .from("client_notes")
-      .select("*")
-      .eq("client_id", id)
-      .order("position");
-    setNotes(n || []);
-    const cm: Record<string, string> = {};
-    (n || []).forEach((note: any) => { cm[note.tab_key] = note.content || ""; });
-    setNoteContent(cm);
-    setNoteDirty({});
     setForm({
       ...(c || {}),
       brand_notes: getVisibleBrandNotes(c?.brand_notes),
@@ -88,37 +71,6 @@ export default function ClientDetail() {
     } finally {
       setSyncingAccountId(null);
     }
-  };
-
-  const saveNote = async (tabKey: string) => {
-    setNoteSaving(tabKey);
-    await supabase.from("client_notes")
-      .update({ content: noteContent[tabKey] ?? "", updated_at: new Date().toISOString() })
-      .eq("client_id", id)
-      .eq("tab_key", tabKey);
-    setNoteDirty((d) => ({ ...d, [tabKey]: false }));
-    setNoteSaving(null);
-  };
-
-  const addTab = async () => {
-    if (!newTabLabel.trim()) return;
-    const tabKey = newTabLabel.toLowerCase().replace(/[^a-z0-9]+/g, "_");
-    const { error } = await supabase.from("client_notes").insert([{
-      client_id: id,
-      tab_key: tabKey,
-      tab_label: newTabLabel.trim(),
-      content: "",
-      position: notes.length,
-    } as any]);
-    if (error) return toast.error(error.message);
-    setNewTabLabel("");
-    setAddingTab(false);
-    load();
-  };
-
-  const deleteTab = async (tabKey: string) => {
-    await supabase.from("client_notes").delete().eq("client_id", id).eq("tab_key", tabKey);
-    load();
   };
 
   if (!client) return <PageContainer><div className="lynck-muted">Loading…</div></PageContainer>;
@@ -335,97 +287,18 @@ export default function ClientDetail() {
       </div>
       <div className="mt-8">
         <p className="lynck-section-label mb-3 inline-flex items-center gap-2">
-          <FileText className="size-3" /> Client context
+          <NotebookText className="size-3" /> Client notes
         </p>
-        <div className="lynck-card overflow-hidden">
-          {notes.length === 0 ? (
-            <div className="p-8 text-center lynck-muted text-sm">No note tabs yet. They are created automatically when you add a client.</div>
-          ) : (
-            <Tabs defaultValue={notes[0]?.tab_key} className="w-full">
-              <div className="flex items-center border-b border-border px-1 bg-surface overflow-x-auto">
-                <TabsList className="h-auto bg-transparent gap-0 p-0 rounded-none">
-                  {notes.map((note) => (
-                    <TabsTrigger
-                      key={note.tab_key}
-                      value={note.tab_key}
-                      className="relative rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3 text-sm font-medium lynck-muted data-[state=active]:text-foreground transition-none group"
-                    >
-                      {note.tab_label}
-                      {noteDirty[note.tab_key] && (
-                        <span className="ml-1.5 inline-block size-1.5 rounded-full bg-primary" />
-                      )}
-                      {notes.length > 1 && (
-                        <button
-                          className="ml-2 opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity"
-                          onClick={(e) => { e.stopPropagation(); deleteTab(note.tab_key); }}
-                        >
-                          <X className="size-3" />
-                        </button>
-                      )}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-                <div className="ml-2 flex-shrink-0">
-                  {addingTab ? (
-                    <div className="flex items-center gap-2 py-2">
-                      <Input
-                        autoFocus
-                        value={newTabLabel}
-                        onChange={(e) => setNewTabLabel(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === "Enter") addTab(); if (e.key === "Escape") { setAddingTab(false); setNewTabLabel(""); } }}
-                        placeholder="Tab name…"
-                        className="h-7 w-32 text-sm"
-                      />
-                      <Button size="sm" className="h-7 text-xs" onClick={addTab}>Add</Button>
-                      <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => { setAddingTab(false); setNewTabLabel(""); }}>Cancel</Button>
-                    </div>
-                  ) : (
-                    <Button variant="ghost" size="sm" className="h-7 text-xs lynck-muted" onClick={() => setAddingTab(true)}>
-                      <Plus className="size-3 mr-1" /> Add tab
-                    </Button>
-                  )}
-                </div>
-              </div>
-              {notes.map((note) => (
-                <TabsContent key={note.tab_key} value={note.tab_key} className="m-0 focus-visible:outline-none">
-                  <div className="relative">
-                    <Textarea
-                      value={noteContent[note.tab_key] ?? ""}
-                      onChange={(e) => {
-                        setNoteContent((c) => ({ ...c, [note.tab_key]: e.target.value }));
-                        setNoteDirty((d) => ({ ...d, [note.tab_key]: true }));
-                      }}
-                      onBlur={() => noteDirty[note.tab_key] && saveNote(note.tab_key)}
-                      placeholder={
-                        note.tab_key === "targets"
-                          ? "Target ROAS, CPA goals, budget targets, KPIs the client tracks…"
-                          : note.tab_key === "updates"
-                          ? "Account changes, budget adjustments, campaign launches, pauses…"
-                          : note.tab_key === "adjustments"
-                          ? "Bid changes, audience tweaks, ad copy updates, structural changes…"
-                          : "Add notes here…"
-                      }
-                      className="min-h-[280px] resize-y border-0 rounded-none focus-visible:ring-0 text-card-body leading-relaxed p-5 bg-transparent"
-                      rows={12}
-                    />
-                    <div className="flex items-center justify-between px-5 py-2.5 border-t border-border text-xs lynck-muted">
-                      <span>{note.updated_at ? `Last saved ${new Date(note.updated_at).toLocaleString()}` : "Not saved yet"}</span>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 text-xs"
-                        disabled={!noteDirty[note.tab_key] || noteSaving === note.tab_key}
-                        onClick={() => saveNote(note.tab_key)}
-                      >
-                        <Save className="size-3 mr-1.5" />
-                        {noteSaving === note.tab_key ? "Saving…" : noteDirty[note.tab_key] ? "Save" : "Saved"}
-                      </Button>
-                    </div>
-                  </div>
-                </TabsContent>
-              ))}
-            </Tabs>
-          )}
+        <div className="lynck-card p-5 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-card-body font-medium">Rich text notes</p>
+            <p className="text-xs lynck-muted mt-0.5">Targets, updates, adjustments — with full formatting. AI reads these when regenerating sections.</p>
+          </div>
+          <Button asChild variant="outline" size="sm">
+            <Link to={`/notes?client=${id}`}>
+              Open Notes <ArrowUpRight className="size-3.5 ml-1.5" />
+            </Link>
+          </Button>
         </div>
       </div>
     </PageContainer>

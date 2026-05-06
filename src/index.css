@@ -393,6 +393,33 @@
   }
 }
 
+/* Tiptap / Notes editor */
+.notes-editor .ProseMirror {
+  outline: none;
+  min-height: 500px;
+  padding: 2.5rem 3rem;
+  font-size: 0.9375rem;
+  line-height: 1.8;
+  color: hsl(var(--foreground));
+  font-family: 'Inter', sans-serif;
+}
+.notes-editor .ProseMirror > * + * { margin-top: 0.45em; }
+.notes-editor .ProseMirror h1 { font-size: 1.8rem; font-weight: 700; margin: 1.5rem 0 0.5rem; font-family: 'Playfair Display', serif; }
+.notes-editor .ProseMirror h2 { font-size: 1.3rem; font-weight: 600; margin: 1.2rem 0 0.4rem; letter-spacing: -0.01em; }
+.notes-editor .ProseMirror h3 { font-size: 1.05rem; font-weight: 600; margin: 1rem 0 0.3rem; }
+.notes-editor .ProseMirror p { margin: 0.3rem 0; }
+.notes-editor .ProseMirror ul { list-style: disc; padding-left: 1.6rem; margin: 0.4rem 0; }
+.notes-editor .ProseMirror ol { list-style: decimal; padding-left: 1.6rem; margin: 0.4rem 0; }
+.notes-editor .ProseMirror li { margin: 0.1rem 0; }
+.notes-editor .ProseMirror li > p { margin: 0; }
+.notes-editor .ProseMirror blockquote { border-left: 3px solid hsl(var(--primary)); padding-left: 1rem; margin: 0.75rem 0; opacity: 0.75; font-style: italic; }
+.notes-editor .ProseMirror code { background: rgba(255,255,255,0.08); padding: 0.1em 0.35em; border-radius: 3px; font-size: 0.85em; font-family: monospace; }
+.notes-editor .ProseMirror pre { background: rgba(255,255,255,0.06); padding: 1rem 1.25rem; border-radius: 8px; margin: 0.75rem 0; overflow-x: auto; border: 1px solid hsl(var(--border)); }
+.notes-editor .ProseMirror pre code { background: none; padding: 0; font-size: 0.875em; }
+.notes-editor .ProseMirror hr { border: none; border-top: 1px solid hsl(var(--border)); margin: 1.5rem 0; }
+.notes-editor .ProseMirror p.is-editor-empty:first-child::before { content: attr(data-placeholder); color: hsl(var(--muted-foreground)); pointer-events: none; float: left; height: 0; opacity: 0.6; }
+.notes-editor .ProseMirror strong { font-weight: 700; }
+
 @keyframes crmPageFade {
   from {
     opacity: 0;

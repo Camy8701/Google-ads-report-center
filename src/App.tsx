@@ -10,6 +10,7 @@ import ClientDetail from "./pages/ClientDetail.tsx";
 import Reports from "./pages/Reports.tsx";
 import ReportView from "./pages/ReportView.tsx";
 import Settings from "./pages/Settings.tsx";
+import Notes from "./pages/Notes.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/reports" element={<Reports />} />
             <Route path="/reports/:id" element={<ReportView />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/notes" element={<Notes />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
