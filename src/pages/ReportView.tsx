@@ -303,24 +303,35 @@ function buildLiveSummary(reportGoal: ReportGoalFamily, metrics: MetricsRow, top
   };
 }
 
-function buildLiveWhatChanged(reportGoal: ReportGoalFamily, metrics: MetricsRow, t?: ReportTranslations) {
+function buildLiveWhatChanged(reportGoal: ReportGoalFamily, metrics: MetricsRow, t: ReportTranslations) {
   const costDelta = delta(metrics.cost, metrics.prior?.cost || 0);
   const cpcDelta = delta(metrics.cpc, metrics.prior?.cpc || 0);
   const convRateDelta = delta(metrics.conversion_rate, metrics.prior?.conversion_rate || 0);
   const roasDelta = delta(metrics.roas, metrics.prior?.roas || 0);
+  const leadDelta = delta(metrics.conversions, metrics.prior?.conversions || 0);
+  const cpaDelta = delta(metrics.cpa, metrics.prior?.cpa || 0);
+  const clicksDelta = delta(metrics.clicks, metrics.prior?.clicks || 0);
 
-  const primaryDriver = reportGoal === "ecommerce"
-    ? `spend ${costDelta.dir === "down" ? "pulled back" : costDelta.dir === "up" ? "scaled up" : "held broadly flat"} while return efficiency ${roasDelta.dir === "up" ? "improved" : roasDelta.dir === "down" ? "softened" : "held roughly flat"}`
+  const costDir = costDelta.dir === "down" ? t.costPulledBack : costDelta.dir === "up" ? t.costScaledUp : t.costFlat;
+  const roasDir = roasDelta.dir === "up" ? t.roasImproved : roasDelta.dir === "down" ? t.roasSoftened : t.roasFlat;
+  const leadDir = leadDelta.dir === "up" ? t.leadImproved : t.leadSoftened;
+  const cpaDir = cpaDelta.dir === "down" ? t.cpaEfficient : t.cpaPressure;
+  const trafficDir = clicksDelta.dir === "up" ? t.trafficExpanded : t.trafficContracted;
+  const cpcDir = cpcDelta.dir === "down" ? t.cpcEased : cpcDelta.dir === "up" ? t.cpcRose : t.cpcHeldFlat;
+  const convDir = convRateDelta.dir === "up" ? t.convRateImproved : convRateDelta.dir === "down" ? t.convRateSoftened : t.convRateFlat;
+
+  const primaryDriverDetail = reportGoal === "ecommerce"
+    ? `${t.metricCost} ${costDir}, ${t.metricRoas} ${roasDir}`
     : reportGoal === "lead_gen"
-      ? `lead volume ${delta(metrics.conversions, metrics.prior?.conversions || 0).dir === "up" ? "improved" : "softened"} while CPA ${delta(metrics.cpa, metrics.prior?.cpa || 0).dir === "down" ? "became more efficient" : "came under pressure"}`
-      : `traffic volume ${delta(metrics.clicks, metrics.prior?.clicks || 0).dir === "up" ? "expanded" : "contracted"} while CPC ${cpcDelta.dir === "down" ? "eased" : cpcDelta.dir === "up" ? "rose" : "held flat"}`;
+      ? `${t.metricConversions} ${leadDir}, ${t.metricCpa} ${cpaDir}`
+      : `${t.metricClicks} ${trafficDir}, ${t.metricCpc} ${cpcDir}`;
 
   return {
-    body: `The main movement this month is that ${primaryDriver}. CPC moved from ${fmtMoneyPrecise(metrics.prior?.cpc || 0)} to ${fmtMoneyPrecise(metrics.cpc)}, while conversion rate ${convRateDelta.dir === "up" ? "improved" : convRateDelta.dir === "down" ? "softened" : "held roughly flat"} at ${fmtPct(metrics.conversion_rate)}. This reads more like an efficiency shift in live account performance than a generic seasonal narrative.`,
+    body: `${t.metricCost} ${costDir}. ${t.driverDetailCpc(fmtMoneyPrecise(metrics.prior?.cpc || 0), fmtMoneyPrecise(metrics.cpc))} ${t.metricCtr} / ${t.metricConversions} ${convDir}.`,
     drivers: [
-      { label: t?.driverPrimary ?? "Primary driver", detail: primaryDriver, tone: roasDelta.dir === "up" || cpcDelta.dir === "down" ? "good" : "medium" },
-      { label: t?.driverCpc ?? "CPC shift", detail: `Average CPC moved from ${fmtMoneyPrecise(metrics.prior?.cpc || 0)} to ${fmtMoneyPrecise(metrics.cpc)}.`, tone: cpcDelta.dir === "down" ? "good" : cpcDelta.dir === "up" ? "medium" : "info" },
-      { label: t?.driverConvEfficiency ?? "Conversion efficiency", detail: `Conversion rate moved from ${fmtPct(metrics.prior?.conversion_rate || 0)} to ${fmtPct(metrics.conversion_rate)}.`, tone: convRateDelta.dir === "up" ? "good" : convRateDelta.dir === "down" ? "medium" : "info" },
+      { label: t.driverPrimary, detail: primaryDriverDetail, tone: roasDelta.dir === "up" || cpcDelta.dir === "down" ? "good" : "medium" },
+      { label: t.driverCpc, detail: t.driverDetailCpc(fmtMoneyPrecise(metrics.prior?.cpc || 0), fmtMoneyPrecise(metrics.cpc)), tone: cpcDelta.dir === "down" ? "good" : cpcDelta.dir === "up" ? "medium" : "info" },
+      { label: t.driverConvEfficiency, detail: t.driverDetailConvRate(fmtPct(metrics.prior?.conversion_rate || 0), fmtPct(metrics.conversion_rate)), tone: convRateDelta.dir === "up" ? "good" : convRateDelta.dir === "down" ? "medium" : "info" },
     ],
   };
 }
@@ -426,13 +437,30 @@ export default function ReportView() {
       let cursorY = marginMm;
       let isFirstPage = true;
 
+      const ignoreEl = (el: Element) =>
+        el.classList.contains("no-print") || el.classList.contains("pdf-export-hidden");
+
       for (const block of blocks) {
-        const canvas = await html2canvas(block, {
-          scale: 2,
-          useCORS: true,
-          backgroundColor: bg,
-          logging: false,
-        });
+        let canvas: HTMLCanvasElement;
+        try {
+          canvas = await html2canvas(block, {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: bg,
+            logging: false,
+            ignoreElements: ignoreEl,
+          });
+        } catch {
+          // Retry at scale 1 — works around html2canvas Range.setEnd crash
+          // triggered by multi-byte characters like ß in German text.
+          canvas = await html2canvas(block, {
+            scale: 1,
+            useCORS: true,
+            backgroundColor: bg,
+            logging: false,
+            ignoreElements: ignoreEl,
+          });
+        }
         const imgData = canvas.toDataURL("image/png");
         const blockHeightMm = (canvas.height * contentWidthMm) / canvas.width;
 
@@ -769,7 +797,7 @@ export default function ReportView() {
     .sort((a, b) => (b.clicks || 0) - (a.clicks || 0) || (b.conversions || 0) - (a.conversions || 0));
   const deviceSplit = buildDeviceSplit(displayMetrics);
   const liveSummary = useLiveDerivedContent ? buildLiveSummary(goalFamily, displayMetrics, spendCampaigns, t) : null;
-  const liveWhatChanged = useLiveDerivedContent ? buildLiveWhatChanged(goalFamily, displayMetrics, t) : null;
+  const liveWhatChanged = buildLiveWhatChanged(goalFamily, displayMetrics, t);
   const liveOpportunities = useLiveDerivedContent ? buildLiveOpportunities(goalFamily, spendCampaigns, topKeywords, t) : null;
   const liveRecommendations = useLiveDerivedContent ? buildLiveRecommendations(goalFamily, spendCampaigns, topKeywords, topProducts) : [];
   const summaryBody = useLiveDerivedContent ? liveSummary?.body || summary?.body || "" : summary?.body || "";
@@ -788,9 +816,9 @@ export default function ReportView() {
   );
   const conversionSplit = asArray<any>(summaryData.conversionSplit);
   const leadActions = asArray<any>(summaryData.leadActions);
-  // When real Google Ads data is connected, always use live drivers (translated).
-  // Only fall back to stored data.drivers when using mock/manual data.
-  const driverCards = useLiveDerivedContent
+  // Always use translated live drivers unless we have no live data AND the language is English.
+  // This ensures the driver cards are always in the client's language.
+  const driverCards = (useLiveDerivedContent || language !== "en")
     ? asArray<any>(liveWhatChanged?.drivers)
     : asArray<any>(whatChanged?.data?.drivers);
   const opportunitiesBody = useLiveDerivedContent ? liveOpportunities || opportunities?.body || "" : opportunities?.body || "";

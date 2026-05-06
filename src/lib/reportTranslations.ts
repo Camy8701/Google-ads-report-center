@@ -143,6 +143,30 @@ export interface ReportTranslations {
   driverCpc: string;
   driverConvEfficiency: string;
 
+  // Direction phrases used in driver detail templates
+  costScaledUp: string;
+  costPulledBack: string;
+  costFlat: string;
+  roasImproved: string;
+  roasSoftened: string;
+  roasFlat: string;
+  leadImproved: string;
+  leadSoftened: string;
+  cpaEfficient: string;
+  cpaPressure: string;
+  trafficExpanded: string;
+  trafficContracted: string;
+  cpcEased: string;
+  cpcRose: string;
+  cpcHeldFlat: string;
+  convRateImproved: string;
+  convRateSoftened: string;
+  convRateFlat: string;
+
+  // Full driver detail sentence templates
+  driverDetailCpc: (from: string, to: string) => string;
+  driverDetailConvRate: (from: string, to: string) => string;
+
   // Tooltip labels
   tooltipConversions: string;
   tooltipSpendShare: string;
@@ -300,6 +324,17 @@ const en: ReportTranslations = {
   driverPrimary: "Primary driver",
   driverCpc: "CPC shift",
   driverConvEfficiency: "Conversion efficiency",
+
+  costScaledUp: "scaled up", costPulledBack: "pulled back", costFlat: "held broadly flat",
+  roasImproved: "improved", roasSoftened: "softened", roasFlat: "held roughly flat",
+  leadImproved: "improved", leadSoftened: "softened",
+  cpaEfficient: "became more efficient", cpaPressure: "came under pressure",
+  trafficExpanded: "expanded", trafficContracted: "contracted",
+  cpcEased: "eased", cpcRose: "rose", cpcHeldFlat: "held flat",
+  convRateImproved: "improved", convRateSoftened: "softened", convRateFlat: "held roughly flat",
+
+  driverDetailCpc: (from, to) => `Average CPC moved from ${from} to ${to}.`,
+  driverDetailConvRate: (from, to) => `Conversion rate moved from ${from} to ${to}.`,
 
   tooltipConversions: "Conversions",
   tooltipSpendShare: "Spend share",
@@ -460,6 +495,17 @@ const de: ReportTranslations = {
   driverCpc: "CPC-Entwicklung",
   driverConvEfficiency: "Conversion-Effizienz",
 
+  costScaledUp: "gestiegen", costPulledBack: "zurückgegangen", costFlat: "weitgehend stabil geblieben",
+  roasImproved: "verbessert", roasSoftened: "geschwächt", roasFlat: "weitgehend stabil geblieben",
+  leadImproved: "gestiegen", leadSoftened: "gesunken",
+  cpaEfficient: "effizienter geworden", cpaPressure: "unter Druck geraten",
+  trafficExpanded: "gewachsen", trafficContracted: "gesunken",
+  cpcEased: "gesunken", cpcRose: "gestiegen", cpcHeldFlat: "stabil geblieben",
+  convRateImproved: "verbessert", convRateSoftened: "geschwächt", convRateFlat: "weitgehend stabil geblieben",
+
+  driverDetailCpc: (from, to) => `Der durchschnittliche CPC hat sich von ${from} auf ${to} verändert.`,
+  driverDetailConvRate: (from, to) => `Die Conversion-Rate hat sich von ${from} auf ${to} verändert.`,
+
   tooltipConversions: "Conversions",
   tooltipSpendShare: "Budgetanteil",
   tooltipShare: "Anteil",
@@ -618,6 +664,17 @@ const fr: ReportTranslations = {
   driverPrimary: "Facteur principal",
   driverCpc: "Évolution du CPC",
   driverConvEfficiency: "Efficacité des conversions",
+
+  costScaledUp: "a augmenté", costPulledBack: "a reculé", costFlat: "est resté stable",
+  roasImproved: "s'est amélioré", roasSoftened: "s'est affaibli", roasFlat: "est resté stable",
+  leadImproved: "a progressé", leadSoftened: "a reculé",
+  cpaEfficient: "est devenu plus efficace", cpaPressure: "est sous pression",
+  trafficExpanded: "s'est développé", trafficContracted: "s'est réduit",
+  cpcEased: "a baissé", cpcRose: "a augmenté", cpcHeldFlat: "est resté stable",
+  convRateImproved: "s'est amélioré", convRateSoftened: "s'est affaibli", convRateFlat: "est resté stable",
+
+  driverDetailCpc: (from, to) => `Le CPC moyen est passé de ${from} à ${to}.`,
+  driverDetailConvRate: (from, to) => `Le taux de conversion est passé de ${from} à ${to}.`,
 
   tooltipConversions: "Conversions",
   tooltipSpendShare: "Part des dépenses",
@@ -778,6 +835,17 @@ const es: ReportTranslations = {
   driverCpc: "Variación del CPC",
   driverConvEfficiency: "Eficiencia de conversión",
 
+  costScaledUp: "aumentó", costPulledBack: "disminuyó", costFlat: "se mantuvo estable",
+  roasImproved: "mejoró", roasSoftened: "se debilitó", roasFlat: "se mantuvo estable",
+  leadImproved: "mejoró", leadSoftened: "disminuyó",
+  cpaEfficient: "mejoró su eficiencia", cpaPressure: "quedó bajo presión",
+  trafficExpanded: "creció", trafficContracted: "se redujo",
+  cpcEased: "bajó", cpcRose: "subió", cpcHeldFlat: "se mantuvo estable",
+  convRateImproved: "mejoró", convRateSoftened: "se debilitó", convRateFlat: "se mantuvo estable",
+
+  driverDetailCpc: (from, to) => `El CPC promedio pasó de ${from} a ${to}.`,
+  driverDetailConvRate: (from, to) => `La tasa de conversión pasó de ${from} a ${to}.`,
+
   tooltipConversions: "Conversiones",
   tooltipSpendShare: "Cuota de gasto",
   tooltipShare: "Cuota",
@@ -936,6 +1004,17 @@ const nl: ReportTranslations = {
   driverPrimary: "Hoofdaanjager",
   driverCpc: "CPC-verschuiving",
   driverConvEfficiency: "Conversie-efficiëntie",
+
+  costScaledUp: "gestegen", costPulledBack: "gedaald", costFlat: "grotendeels stabiel gebleven",
+  roasImproved: "verbeterd", roasSoftened: "verzwakt", roasFlat: "grotendeels stabiel gebleven",
+  leadImproved: "verbeterd", leadSoftened: "gedaald",
+  cpaEfficient: "efficiënter geworden", cpaPressure: "onder druk gekomen",
+  trafficExpanded: "gegroeid", trafficContracted: "gekrompen",
+  cpcEased: "gedaald", cpcRose: "gestegen", cpcHeldFlat: "stabiel gebleven",
+  convRateImproved: "verbeterd", convRateSoftened: "verzwakt", convRateFlat: "stabiel gebleven",
+
+  driverDetailCpc: (from, to) => `De gemiddelde CPC is veranderd van ${from} naar ${to}.`,
+  driverDetailConvRate: (from, to) => `De conversieratio is veranderd van ${from} naar ${to}.`,
 
   tooltipConversions: "Conversies",
   tooltipSpendShare: "Budgetaandeel",
@@ -1096,6 +1175,17 @@ const it: ReportTranslations = {
   driverCpc: "Variazione CPC",
   driverConvEfficiency: "Efficienza conversioni",
 
+  costScaledUp: "è aumentata", costPulledBack: "è diminuita", costFlat: "è rimasta stabile",
+  roasImproved: "è migliorato", roasSoftened: "si è indebolito", roasFlat: "è rimasto stabile",
+  leadImproved: "è migliorato", leadSoftened: "è diminuito",
+  cpaEfficient: "è diventato più efficiente", cpaPressure: "è sotto pressione",
+  trafficExpanded: "è cresciuto", trafficContracted: "si è ridotto",
+  cpcEased: "è sceso", cpcRose: "è salito", cpcHeldFlat: "è rimasto stabile",
+  convRateImproved: "è migliorato", convRateSoftened: "si è indebolito", convRateFlat: "è rimasto stabile",
+
+  driverDetailCpc: (from, to) => `Il CPC medio è passato da ${from} a ${to}.`,
+  driverDetailConvRate: (from, to) => `Il tasso di conversione è passato da ${from} a ${to}.`,
+
   tooltipConversions: "Conversioni",
   tooltipSpendShare: "Quota di spesa",
   tooltipShare: "Quota",
@@ -1254,6 +1344,17 @@ const pt: ReportTranslations = {
   driverPrimary: "Fator principal",
   driverCpc: "Variação do CPC",
   driverConvEfficiency: "Eficiência de conversão",
+
+  costScaledUp: "aumentou", costPulledBack: "recuou", costFlat: "manteve-se estável",
+  roasImproved: "melhorou", roasSoftened: "enfraqueceu", roasFlat: "manteve-se estável",
+  leadImproved: "melhorou", leadSoftened: "diminuiu",
+  cpaEfficient: "tornou-se mais eficiente", cpaPressure: "ficou sob pressão",
+  trafficExpanded: "cresceu", trafficContracted: "reduziu",
+  cpcEased: "caiu", cpcRose: "subiu", cpcHeldFlat: "manteve-se estável",
+  convRateImproved: "melhorou", convRateSoftened: "enfraqueceu", convRateFlat: "manteve-se estável",
+
+  driverDetailCpc: (from, to) => `O CPC médio mudou de ${from} para ${to}.`,
+  driverDetailConvRate: (from, to) => `A taxa de conversão mudou de ${from} para ${to}.`,
 
   tooltipConversions: "Conversões",
   tooltipSpendShare: "Participação do gasto",
