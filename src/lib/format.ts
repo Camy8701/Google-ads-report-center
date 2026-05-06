@@ -10,13 +10,13 @@ export const fmtPct = (n: number | null | undefined, digits = 2) => {
   if (n == null || isNaN(Number(n))) return "—";
   return `${Number(n).toFixed(digits)}%`;
 };
-export const fmtMonth = (d: string | Date) => {
+export const fmtMonth = (d: string | Date, locale?: string) => {
   const date = typeof d === "string" ? new Date(d) : d;
-  return date.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+  return date.toLocaleDateString(locale ?? undefined, { month: "long", year: "numeric" });
 };
-export const fmtMonthShort = (d: string | Date) => {
+export const fmtMonthShort = (d: string | Date, locale?: string) => {
   const date = typeof d === "string" ? new Date(d) : d;
-  return date.toLocaleDateString(undefined, { month: "short", year: "numeric" });
+  return date.toLocaleDateString(locale ?? undefined, { month: "short", year: "numeric" });
 };
 export const fmtDate = (d: string | Date) => {
   const date = typeof d === "string" ? new Date(d) : d;

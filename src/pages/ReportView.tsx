@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { fmtMonth, fmtMonthShort, fmtNum, fmtMoney, fmtPct, fmtDate, delta } from "@/lib/format";
 import { getClientLanguage, getClientReportGoal, getReportGoalLabel, getReportGoalFamily, getVisibleBrandNotes, type ReportGoal, type ReportGoalFamily } from "@/lib/reportGoal";
+import { getReportT, getLocale, type ReportTranslations } from "@/lib/reportTranslations";
 import { ArrowLeft, Save, Sparkles, Printer, CheckCircle2, FileDown, ArrowUp, ArrowDown, Minus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
@@ -213,13 +214,13 @@ function buildDeviceSplit(metrics: MetricsRow) {
     .filter((item) => item.label && item.value > 0);
 }
 
-function buildTimeline(reportMonth: string, metrics: MetricsRow, rawTimeline: any[]) {
+function buildTimeline(reportMonth: string, metrics: MetricsRow, rawTimeline: any[], locale?: string) {
   const timeline = asArray<any>(rawTimeline);
   if (timeline.length >= 2) {
     return timeline.map((point, index) => {
       const d = new Date(reportMonth);
       d.setMonth(d.getMonth() - (timeline.length - 1 - index));
-      return { ...point, label: fmtMonthShort(d) };
+      return { ...point, label: fmtMonthShort(d, locale) };
     });
   }
 
@@ -246,7 +247,7 @@ function buildTimeline(reportMonth: string, metrics: MetricsRow, rawTimeline: an
     const lerp = (a: number, b: number) => Math.round(a * (1 - t) + b * t);
     const lerpF = (a: number, b: number) => Number((a * (1 - t) + b * t).toFixed(2));
     return {
-      label: fmtMonthShort(d),
+      label: fmtMonthShort(d, locale),
       cost: lerp(priorCost * 0.7, cur.cost),
       conversions: lerp(priorConversions * 0.7, cur.conversions),
       roas: lerpF(priorRoas * 0.7, cur.roas),
@@ -296,7 +297,7 @@ function buildLiveSummary(reportGoal: ReportGoalFamily, metrics: MetricsRow, top
   };
 }
 
-function buildLiveWhatChanged(reportGoal: ReportGoalFamily, metrics: MetricsRow) {
+function buildLiveWhatChanged(reportGoal: ReportGoalFamily, metrics: MetricsRow, t?: ReportTranslations) {
   const costDelta = delta(metrics.cost, metrics.prior?.cost || 0);
   const cpcDelta = delta(metrics.cpc, metrics.prior?.cpc || 0);
   const convRateDelta = delta(metrics.conversion_rate, metrics.prior?.conversion_rate || 0);
@@ -311,9 +312,9 @@ function buildLiveWhatChanged(reportGoal: ReportGoalFamily, metrics: MetricsRow)
   return {
     body: `The main movement this month is that ${primaryDriver}. CPC moved from ${fmtMoneyPrecise(metrics.prior?.cpc || 0)} to ${fmtMoneyPrecise(metrics.cpc)}, while conversion rate ${convRateDelta.dir === "up" ? "improved" : convRateDelta.dir === "down" ? "softened" : "held roughly flat"} at ${fmtPct(metrics.conversion_rate)}. This reads more like an efficiency shift in live account performance than a generic seasonal narrative.`,
     drivers: [
-      { label: "Primary driver", detail: primaryDriver, tone: roasDelta.dir === "up" || cpcDelta.dir === "down" ? "good" : "medium" },
-      { label: "CPC shift", detail: `Average CPC moved from ${fmtMoneyPrecise(metrics.prior?.cpc || 0)} to ${fmtMoneyPrecise(metrics.cpc)}.`, tone: cpcDelta.dir === "down" ? "good" : cpcDelta.dir === "up" ? "medium" : "info" },
-      { label: "Conversion efficiency", detail: `Conversion rate moved from ${fmtPct(metrics.prior?.conversion_rate || 0)} to ${fmtPct(metrics.conversion_rate)}.`, tone: convRateDelta.dir === "up" ? "good" : convRateDelta.dir === "down" ? "medium" : "info" },
+      { label: t?.driverPrimary ?? "Primary driver", detail: primaryDriver, tone: roasDelta.dir === "up" || cpcDelta.dir === "down" ? "good" : "medium" },
+      { label: t?.driverCpc ?? "CPC shift", detail: `Average CPC moved from ${fmtMoneyPrecise(metrics.prior?.cpc || 0)} to ${fmtMoneyPrecise(metrics.cpc)}.`, tone: cpcDelta.dir === "down" ? "good" : cpcDelta.dir === "up" ? "medium" : "info" },
+      { label: t?.driverConvEfficiency ?? "Conversion efficiency", detail: `Conversion rate moved from ${fmtPct(metrics.prior?.conversion_rate || 0)} to ${fmtPct(metrics.conversion_rate)}.`, tone: convRateDelta.dir === "up" ? "good" : convRateDelta.dir === "down" ? "medium" : "info" },
     ],
   };
 }
@@ -642,6 +643,9 @@ export default function ReportView() {
 
   const reportGoal = getClientReportGoal(client?.brand_notes, client?.business_type);
   const goalFamily = getReportGoalFamily(reportGoal);
+  const language = getClientLanguage(client?.brand_notes);
+  const t = getReportT(language);
+  const locale = getLocale(language);
   const displayMetrics = normalizeMetricsForDisplay(metrics);
   const summaryData = summary?.data || {};
   const useLiveDerivedContent = isImportedGoogleAdsShape(metrics);
@@ -661,7 +665,7 @@ export default function ReportView() {
     .sort((a, b) => (b.clicks || 0) - (a.clicks || 0) || (b.conversions || 0) - (a.conversions || 0));
   const deviceSplit = buildDeviceSplit(displayMetrics);
   const liveSummary = useLiveDerivedContent ? buildLiveSummary(goalFamily, displayMetrics, spendCampaigns) : null;
-  const liveWhatChanged = useLiveDerivedContent ? buildLiveWhatChanged(goalFamily, displayMetrics) : null;
+  const liveWhatChanged = useLiveDerivedContent ? buildLiveWhatChanged(goalFamily, displayMetrics, t) : null;
   const liveOpportunities = useLiveDerivedContent ? buildLiveOpportunities(goalFamily, spendCampaigns, topKeywords) : null;
   const liveRecommendations = useLiveDerivedContent ? buildLiveRecommendations(goalFamily, spendCampaigns, topKeywords, topProducts) : [];
   const summaryBody = useLiveDerivedContent ? liveSummary?.body || summary?.body || "" : summary?.body || "";
@@ -676,6 +680,7 @@ export default function ReportView() {
       : !useLiveDerivedContent
         ? asArray<any>(summaryData.timeline)
         : [],
+    locale,
   );
   const conversionSplit = asArray<any>(summaryData.conversionSplit);
   const leadActions = asArray<any>(summaryData.leadActions);
@@ -684,10 +689,10 @@ export default function ReportView() {
     : asArray<any>(whatChanged?.data?.drivers);
   const opportunitiesBody = useLiveDerivedContent ? liveOpportunities || opportunities?.body || "" : opportunities?.body || "";
   const decisionBody = useLiveDerivedContent
-    ? "Three priorities for next month, ordered by expected impact and grounded in the actual account data."
-    : decision?.body || "Three priorities for next month, ordered by expected impact.";
+    ? t.decisionBodyLive
+    : decision?.body || t.decisionBodyLive;
   const recommendationItems = useLiveDerivedContent ? liveRecommendations : recs;
-  const heroMetrics = getHeroMetrics(goalFamily, displayMetrics, conversionSplit);
+  const heroMetrics = getHeroMetrics(goalFamily, displayMetrics, conversionSplit, t);
   const winners = getCampaignWinners(spendCampaigns, goalFamily);
 
   return (
@@ -695,26 +700,26 @@ export default function ReportView() {
       <div className="no-print sticky top-0 z-20 border-b border-border bg-background/85 backdrop-blur">
         <div className="mx-auto flex flex-wrap items-center justify-between gap-4 px-5 py-[14px] sm:px-8 md:px-[60px]" style={{ maxWidth: 1060 }}>
           <Link to="/reports" className="inline-flex items-center gap-2 text-sm lynck-muted hover:text-foreground">
-            <ArrowLeft className="size-4" /> All reports
+            <ArrowLeft className="size-4" /> {t.allReports}
           </Link>
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge variant="report" value={report.status} />
             {report.status !== "approved" && report.status !== "exported" && (
-              <Button size="sm" variant="outline" onClick={() => setStatus("in_review")}>Mark in review</Button>
+              <Button size="sm" variant="outline" onClick={() => setStatus("in_review")}>{t.markInReview}</Button>
             )}
             {report.status !== "approved" && (
               <Button size="sm" variant="outline" onClick={() => setStatus("approved")}>
-                <CheckCircle2 className="size-4 mr-1.5" /> Approve
+                <CheckCircle2 className="size-4 mr-1.5" /> {t.approve}
               </Button>
             )}
             <Button size="sm" variant="outline" disabled={resyncing} onClick={resyncSearchTerms}>
-              <RefreshCw className={`size-4 mr-1.5 ${resyncing ? "animate-spin" : ""}`} /> {resyncing ? "Syncing…" : "Re-sync search terms"}
+              <RefreshCw className={`size-4 mr-1.5 ${resyncing ? "animate-spin" : ""}`} /> {resyncing ? t.syncing : t.resyncSearchTerms}
             </Button>
             <Button size="sm" variant="outline" onClick={() => window.print()}>
-              <Printer className="size-4 mr-1.5" /> Print
+              <Printer className="size-4 mr-1.5" /> {t.print}
             </Button>
             <Button size="sm" disabled={exporting} onClick={exportPdf}>
-              <FileDown className="size-4 mr-1.5" /> {exporting ? "Exporting…" : "Export PDF"}
+              <FileDown className="size-4 mr-1.5" /> {exporting ? t.exporting : t.exportPdf}
             </Button>
           </div>
         </div>
@@ -726,19 +731,19 @@ export default function ReportView() {
           <div className="relative mb-12 flex flex-wrap items-start justify-between gap-6">
             <Wordmark size="md" />
             <div className="text-right text-sm">
-              <p className="lynck-section-label mb-1">Generated</p>
+              <p className="lynck-section-label mb-1">{t.generated}</p>
               <p className="lynck-muted">{fmtDate(new Date())}</p>
             </div>
           </div>
           <div className="relative flex flex-wrap items-center gap-3">
-            <p className="lynck-section-label">Monthly performance report</p>
+            <p className="lynck-section-label">{t.monthlyPerformanceReport}</p>
             <span className="rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.15em]" style={{ borderColor: reportPalette.border, background: reportPalette.surfaceAlt, color: reportPalette.data }}>
-              Goal · {getReportGoalLabel(reportGoal)}
+              {t.goal} {getReportGoalLabel(reportGoal)}
             </span>
           </div>
           <h1 className="lynck-hero-title relative mb-6 mt-5 max-w-4xl break-words text-[clamp(2.8rem,9vw,4.75rem)] leading-[0.96]">
             {client?.name}
-            <em className="not-italic text-primary"> — {fmtMonth(report.period_month)}.</em>
+            <em className="not-italic text-primary"> — {fmtMonth(report.period_month, locale)}.</em>
           </h1>
           {summaryBody && (
             <p className="relative max-w-3xl whitespace-pre-wrap leading-relaxed text-card-body lynck-muted">
@@ -749,18 +754,18 @@ export default function ReportView() {
 
         <section className="mb-14 print-page">
           <div className="mb-8">
-            <p className="lynck-section-label mb-3">Performance snapshot</p>
+            <p className="lynck-section-label mb-3">{t.performanceSnapshot}</p>
             <h2 className="font-display text-3xl md:text-4xl font-bold">
-              The metrics that <em className="not-italic text-primary">matter first</em>
+              {t.metricsTitle} <em className="not-italic text-primary">{t.metricsEm}</em>
             </h2>
           </div>
 
           {takeaways.length > 0 && (
             <div className="mb-6 grid gap-3 sm:grid-cols-3">
-              {takeaways.map((t, i) => (
+              {takeaways.map((tw, i) => (
                 <div key={i} className="lynck-card p-4">
-                  <p className="mb-1.5 text-[11px] uppercase tracking-[0.15em] text-primary">Takeaway {i + 1}</p>
-                  <p className="text-card-body">{t}</p>
+                  <p className="mb-1.5 text-[11px] uppercase tracking-[0.15em] text-primary">{t.takeaway(i + 1)}</p>
+                  <p className="text-card-body">{tw}</p>
                 </div>
               ))}
             </div>
@@ -774,35 +779,35 @@ export default function ReportView() {
 
           <div className="mt-6">
             <ChartCard
-              label="Six-month trend"
-              title={goalFamily === "ecommerce" ? "Spend vs return" : "Spend vs CPA"}
-              body="A quick read on direction matters more than a paragraph of explanation here."
+              label={t.sixMonthTrend}
+              title={goalFamily === "ecommerce" ? t.spendVsReturn : t.spendVsCpa}
+              body={t.trendNote}
             >
-              <MiniTrendChart data={timeline} goal={goalFamily} />
+              <MiniTrendChart data={timeline} goal={goalFamily} t={t} />
             </ChartCard>
           </div>
         </section>
 
         <section className="mb-14 print-page">
           <div className="mb-8">
-            <p className="lynck-section-label mb-3">Campaign comparison</p>
+            <p className="lynck-section-label mb-3">{t.campaignComparison}</p>
             <h2 className="font-display text-3xl md:text-4xl font-bold">
-              Where budget <em className="not-italic text-primary">did the work</em>
+              {t.campaignCompTitle} <em className="not-italic text-primary">{t.campaignCompEm}</em>
             </h2>
           </div>
           <div className="grid gap-4 md:grid-cols-[1.55fr_1fr]">
-            <ChartCard label="Performance comparison" title="Campaign ladder">
-              <CampaignPerformanceChart campaigns={spendCampaigns} goal={goalFamily} />
+            <ChartCard label={t.performanceComparison} title={t.campaignLadder}>
+              <CampaignPerformanceChart campaigns={spendCampaigns} goal={goalFamily} t={t} />
             </ChartCard>
-            <ChartCard label="Budget allocation" title="Spend share">
-              <SpendShareChart campaigns={spendCampaigns} totalSpend={displayMetrics.cost} />
+            <ChartCard label={t.budgetAllocation} title={t.spendShare}>
+              <SpendShareChart campaigns={spendCampaigns} totalSpend={displayMetrics.cost} t={t} />
             </ChartCard>
           </div>
           <div className={`mt-4 grid gap-4 ${deviceSplit.length > 0 ? "md:grid-cols-[1.15fr_0.85fr]" : "md:grid-cols-1"}`}>
-            <WinnerCard title="Top winner" campaign={winners.best} goal={goalFamily} />
+            <WinnerCard title={t.topWinner} campaign={winners.best} goal={goalFamily} t={t} />
             {deviceSplit.length > 0 && (
-              <ChartCard label="Audience split" title="Device split">
-                <DeviceSplitCard split={deviceSplit} />
+              <ChartCard label={t.audienceSplit} title={t.deviceSplit}>
+                <DeviceSplitCard split={deviceSplit} t={t} />
               </ChartCard>
             )}
           </div>
@@ -819,13 +824,14 @@ export default function ReportView() {
             regenerating={regenerating}
             printPage={false}
             overrideBody={useLiveDerivedContent && !whatChanged?.data?.manual_override ? liveWhatChanged?.body : undefined}
+            t={t}
           />
 
           <div className="mt-10 grid gap-4 md:grid-cols-[0.78fr_1.22fr]">
-            <ChartCard label="Movement detail" title="Main movements">
+            <ChartCard label={t.movementDetail} title={t.mainMovements}>
               <DriverGrid drivers={driverCards} stacked />
             </ChartCard>
-            <ChartCard label="Search insight" title="Top 10 search terms">
+            <ChartCard label={t.searchInsight} title={t.topSearchTerms}>
               <TopItemsList
                 items={topKeywords.slice(0, 10).map((keyword) => ({
                   name: keyword.term,
@@ -833,15 +839,16 @@ export default function ReportView() {
                   conversions: keyword.conversions,
                   avgCpc: keyword.clicks > 0 ? keyword.cost / keyword.clicks : 0,
                 }))}
-                emptyLabel="No search term data available yet."
+                emptyLabel={t.noSearchTermData}
                 nameColumnRatio={2.2}
+                t={t}
               />
             </ChartCard>
           </div>
 
           {goalFamily === "ecommerce" ? (
             <div className="mt-4">
-              <ChartCard label="Product insight" title="Top 10 products">
+              <ChartCard label={t.productInsight} title={t.topProducts}>
                 <TopItemsList
                   items={topProducts.slice(0, 10).map((product) => ({
                     name: product.name,
@@ -849,33 +856,34 @@ export default function ReportView() {
                     conversions: product.conversions,
                     avgCpc: product.avgCpc ?? (product.clicks > 0 ? product.cost / product.clicks : 0),
                   }))}
-                  emptyLabel="No product-level performance available yet."
+                  emptyLabel={t.noProductData}
                   nameColumnRatio={4.1}
+                  t={t}
                 />
               </ChartCard>
             </div>
           ) : goalFamily === "lead_gen" ? (
             <div className="mt-4">
-              <ChartCard label="Lead insight" title="Hard vs soft conversions">
-                <LeadInsightPanel split={conversionSplit} actions={leadActions} />
+              <ChartCard label={t.leadInsight} title={t.hardVsSoftConversions}>
+                <LeadInsightPanel split={conversionSplit} actions={leadActions} t={t} />
               </ChartCard>
             </div>
           ) : (
             <div className="mt-4">
-              <ChartCard label="Growth insight" title="Momentum signals">
-                <GrowthInsightPanel metrics={displayMetrics} keywords={topKeywords} />
+              <ChartCard label={t.growthInsight} title={t.momentumSignals}>
+                <GrowthInsightPanel metrics={displayMetrics} keywords={topKeywords} t={t} />
               </ChartCard>
             </div>
           )}
 
           {opportunitiesBody && (
             <div className="mt-4">
-              <InsightNote label="Optimization lens" body={opportunitiesBody} />
+              <InsightNote label={t.optimizationLens} body={opportunitiesBody} />
             </div>
           )}
         </section>
 
-        <SectionWrap label="Decision page" title="Recommended" emphasize="actions">
+        <SectionWrap label={t.decisionPageLabel} title={t.decisionPageTitle} emphasize={t.decisionPageEm}>
           <p className="mb-6 max-w-2xl text-card-body lynck-muted">{decisionBody}</p>
           <div className="space-y-4">
             {recommendationItems.map((r, i) => (
@@ -889,11 +897,11 @@ export default function ReportView() {
                 </div>
                 <div className="grid gap-5 md:grid-cols-2 pl-12">
                   <div>
-                    <p className="lynck-section-label mb-1.5">Why it matters</p>
+                    <p className="lynck-section-label mb-1.5">{t.whyItMatters}</p>
                     <p className="text-card-body">{r.why}</p>
                   </div>
                   <div>
-                    <p className="lynck-section-label mb-1.5">Expected impact</p>
+                    <p className="lynck-section-label mb-1.5">{t.expectedImpact}</p>
                     <p className="text-card-body">{r.expected_impact}</p>
                   </div>
                 </div>
@@ -904,7 +912,7 @@ export default function ReportView() {
 
         <footer className="mt-16 flex items-center justify-between border-t border-border pt-8 text-xs lynck-muted">
           <Wordmark size="sm" />
-          <span>Always optimizing — LYNCK Studio</span>
+          <span>{t.footerTagline}</span>
         </footer>
       </div>
     </div>
@@ -945,6 +953,7 @@ function Section({
   extra,
   printPage = true,
   overrideBody,
+  t,
 }: {
   kind: string;
   section?: SectionRow;
@@ -956,15 +965,16 @@ function Section({
   extra?: React.ReactNode;
   printPage?: boolean;
   overrideBody?: string;
+  t: ReportTranslations;
 }) {
   if (!section) return null;
   const titleMap: Record<string, { label: string; title: string; em: string }> = {
-    executive_summary: { label: "Executive summary", title: "The month at", em: "a glance" },
-    what_changed: { label: "What changed", title: "Why the numbers", em: "moved" },
-    opportunities: { label: "Opportunities", title: "Where to lean", em: "in next" },
-    appendix: { label: "Appendix", title: "Supporting", em: "detail" },
+    executive_summary: { label: t.execSummaryLabel, title: t.execSummaryTitle, em: t.execSummaryEm },
+    what_changed: { label: t.whatChangedLabel, title: t.whatChangedTitle, em: t.whatChangedEm },
+    opportunities: { label: t.opportunitiesLabel, title: t.opportunitiesTitle, em: t.opportunitiesEm },
+    appendix: { label: t.appendixLabel, title: t.appendixTitle, em: t.appendixEm },
   };
-  const t = titleMap[kind] || { label: section.title, title: section.title, em: "" };
+  const tm = titleMap[kind] || { label: section.title, title: section.title, em: "" };
   const displayBody = overrideBody ?? section.body;
   const isEditing = editing[section.id] !== undefined;
 
@@ -972,23 +982,23 @@ function Section({
     <section className={`${printPage ? "print-page" : ""} mb-14`}>
       <div className="mb-6 flex items-end justify-between gap-4">
         <div>
-          <p className="lynck-section-label mb-3">{t.label}</p>
+          <p className="lynck-section-label mb-3">{tm.label}</p>
           <h2 className="font-display text-3xl font-bold md:text-4xl">
-            {t.title}
-            <em className="not-italic text-primary"> {t.em}</em>
+            {tm.title}
+            <em className="not-italic text-primary"> {tm.em}</em>
           </h2>
         </div>
         <div className="no-print pdf-export-hidden flex gap-2">
-          {!isEditing && <Button size="sm" variant="ghost" onClick={() => setEditing({ ...editing, [section.id]: displayBody })}>Edit</Button>}
+          {!isEditing && <Button size="sm" variant="ghost" onClick={() => setEditing({ ...editing, [section.id]: displayBody })}>{t.edit}</Button>}
           {isEditing && (
             <>
-              <Button size="sm" variant="ghost" onClick={() => { const n = { ...editing }; delete n[section.id]; setEditing(n); }}>Cancel</Button>
-              <Button size="sm" onClick={() => onSave(section)}><Save className="size-3.5 mr-1.5" />Save</Button>
+              <Button size="sm" variant="ghost" onClick={() => { const n = { ...editing }; delete n[section.id]; setEditing(n); }}>{t.cancel}</Button>
+              <Button size="sm" onClick={() => onSave(section)}><Save className="size-3.5 mr-1.5" />{t.save}</Button>
             </>
           )}
           <Button size="sm" variant="outline" disabled={regenerating === section.id} onClick={() => onRegenerate(section)}>
             <Sparkles className="size-3.5 mr-1.5" />
-            {regenerating === section.id ? "Regenerating…" : "Regenerate"}
+            {regenerating === section.id ? t.regenerating : t.regenerate}
           </Button>
         </div>
       </div>
@@ -1036,6 +1046,7 @@ function Metric({
           <Icon className="size-3" /> {Math.abs(d.pct).toFixed(1)}% MoM
         </p>
       )}
+      {/* MoM is internationally understood; kept as-is */}
       {footnote && <p className="mt-3 text-xs" style={{ color: reportPalette.data }}>{footnote}</p>}
     </div>
   );
@@ -1062,9 +1073,9 @@ function ChartCard({
   );
 }
 
-function MiniTrendChart({ data, goal }: { data: any[]; goal: ReportGoalFamily }) {
+function MiniTrendChart({ data, goal, t }: { data: any[]; goal: ReportGoalFamily; t: ReportTranslations }) {
   const secondaryKey = goal === "ecommerce" ? "roas" : "cpa";
-  const secondaryLabel = goal === "ecommerce" ? "ROAS" : "CPA";
+  const secondaryLabel = goal === "ecommerce" ? t.metricRoas : t.metricCpa;
 
   return (
     <div>
@@ -1072,7 +1083,7 @@ function MiniTrendChart({ data, goal }: { data: any[]; goal: ReportGoalFamily })
       <div className="flex items-center gap-6 mb-4 px-1">
         <div className="flex items-center gap-2 text-xs">
           <span className="inline-block w-6 rounded-full" style={{ height: 3, background: reportPalette.accent }} />
-          <span style={{ color: reportPalette.muted }}>Cost</span>
+          <span style={{ color: reportPalette.muted }}>{t.legendCost}</span>
         </div>
         <div className="flex items-center gap-2 text-xs">
           <span className="inline-block w-6 rounded-full" style={{ height: 3, background: reportPalette.data }} />
@@ -1102,13 +1113,13 @@ function MiniTrendChart({ data, goal }: { data: any[]; goal: ReportGoalFamily })
             <Tooltip
               contentStyle={{ background: reportPalette.surfaceAlt, border: `1px solid ${reportPalette.border}`, borderRadius: 12, color: reportPalette.text }}
               formatter={(value: any, name: string) => [
-                name === "Cost" ? fmtMoney(Number(value))
-                  : name === "ROAS" ? `${Number(value).toFixed(2)}x`
+                name === t.legendCost ? fmtMoney(Number(value))
+                  : name === t.metricRoas ? `${Number(value).toFixed(2)}x`
                   : fmtMoneyPrecise(Number(value)),
                 name,
               ]}
             />
-            <Line yAxisId="left" type="monotone" dataKey="cost" name="Cost" stroke={reportPalette.accent} strokeWidth={2.5} dot={{ r: 3.5, fill: reportPalette.accent }} activeDot={{ r: 5 }} />
+            <Line yAxisId="left" type="monotone" dataKey="cost" name={t.legendCost} stroke={reportPalette.accent} strokeWidth={2.5} dot={{ r: 3.5, fill: reportPalette.accent }} activeDot={{ r: 5 }} />
             <Line yAxisId="right" type="monotone" dataKey={secondaryKey} name={secondaryLabel} stroke={reportPalette.data} strokeWidth={2.5} dot={{ r: 3.5, fill: reportPalette.data }} activeDot={{ r: 5 }} />
           </LineChart>
         </ResponsiveContainer>
@@ -1117,11 +1128,11 @@ function MiniTrendChart({ data, goal }: { data: any[]; goal: ReportGoalFamily })
   );
 }
 
-function CampaignPerformanceChart({ campaigns, goal }: { campaigns: any[]; goal: ReportGoalFamily }) {
+function CampaignPerformanceChart({ campaigns, goal, t }: { campaigns: any[]; goal: ReportGoalFamily; t: ReportTranslations }) {
   if (!campaigns.length) {
-    return <p className="text-sm lynck-muted">No spend was recorded across campaigns for this period.</p>;
+    return <p className="text-sm lynck-muted">{t.noSpendRecorded}</p>;
   }
-  const metricLabel = goal === "ecommerce" ? "ROAS" : goal === "lead_gen" ? "CPA" : "Clicks";
+  const metricLabel = goal === "ecommerce" ? t.metricRoas : goal === "lead_gen" ? t.metricCpa : t.metricClicks;
   const data = campaigns.map((campaign) => ({
     name: campaign.name.replace(/\s*-\s*/g, " ").replace(/\|/g, " | "),
     spend: Number(campaign.spend || 0),
@@ -1149,13 +1160,13 @@ function CampaignPerformanceChart({ campaigns, goal }: { campaigns: any[]; goal:
           <Tooltip
             contentStyle={{ background: reportPalette.surfaceAlt, border: `1px solid ${reportPalette.border}`, borderRadius: 12, color: reportPalette.text }}
             formatter={(value: any, name: string) => {
-              if (name === "Spend") return [fmtMoney(Number(value)), "Spend"];
+              if (name === t.spend) return [fmtMoney(Number(value)), t.spend];
               if (goal === "ecommerce") return [`${Number(value).toFixed(2)}x`, metricLabel];
               if (goal === "lead_gen") return [fmtMoneyPrecise(Number(value)), metricLabel];
               return [fmtNum(Number(value), 0), metricLabel];
             }}
           />
-          <Bar yAxisId="left" dataKey="spend" name="Spend" radius={[8, 8, 0, 0]} barSize={34}>
+          <Bar yAxisId="left" dataKey="spend" name={t.spend} radius={[8, 8, 0, 0]} barSize={34}>
             {data.map((_, index) => <Cell key={index} fill={chartPalette[index % chartPalette.length]} />)}
           </Bar>
           <Line
@@ -1174,9 +1185,9 @@ function CampaignPerformanceChart({ campaigns, goal }: { campaigns: any[]; goal:
   );
 }
 
-function SpendShareChart({ campaigns, totalSpend }: { campaigns: any[]; totalSpend: number }) {
+function SpendShareChart({ campaigns, totalSpend, t }: { campaigns: any[]; totalSpend: number; t: ReportTranslations }) {
   if (!campaigns.length) {
-    return <p className="text-sm lynck-muted">No spend-share breakdown is available for this period.</p>;
+    return <p className="text-sm lynck-muted">{t.noSpendShareBreakdown}</p>;
   }
   const data = (campaigns || []).map((campaign: any) => ({ name: campaign.name, value: campaign.spendShare || 0 }));
   return (
@@ -1188,11 +1199,11 @@ function SpendShareChart({ campaigns, totalSpend }: { campaigns: any[]; totalSpe
           </Pie>
           <Tooltip
             contentStyle={{ background: reportPalette.surfaceAlt, border: `1px solid ${reportPalette.border}`, borderRadius: 12, color: reportPalette.text }}
-            formatter={(value: any) => [`${Number(value).toFixed(1)}%`, "Spend share"]}
+            formatter={(value: any) => [`${Number(value).toFixed(1)}%`, t.tooltipSpendShare]}
           />
         </PieChart>
       </ResponsiveContainer>
-      <p className="text-sm lynck-muted">Tracked spend: <span className="text-foreground">{fmtMoney(totalSpend)}</span></p>
+      <p className="text-sm lynck-muted">{t.trackedSpend} <span className="text-foreground">{fmtMoney(totalSpend)}</span></p>
       <div className="mt-4 grid w-full gap-2">
         {data.map((item, index) => (
           <div key={item.name} className="flex items-center justify-between gap-3 text-sm">
@@ -1208,26 +1219,26 @@ function SpendShareChart({ campaigns, totalSpend }: { campaigns: any[]; totalSpe
   );
 }
 
-function WinnerCard({ title, campaign, goal, inverse = false }: { title: string; campaign?: any; goal: ReportGoalFamily; inverse?: boolean }) {
+function WinnerCard({ title, campaign, goal, inverse = false, t }: { title: string; campaign?: any; goal: ReportGoalFamily; inverse?: boolean; t: ReportTranslations }) {
   if (!campaign) return null;
   return (
     <div className="lynck-card p-5">
       <p className="lynck-section-label mb-2">{title}</p>
       <h3 className="font-display text-2xl font-bold">{campaign.name}</h3>
       <div className="mt-4 grid grid-cols-3 gap-3">
-        <MiniStat label="Spend" value={fmtMoney(campaign.spend)} />
-        <MiniStat label={goal === "ecommerce" ? "ROAS" : "Conv."} value={goal === "ecommerce" ? `${campaign.roas.toFixed(2)}x` : fmtNum(campaign.conversions)} />
-        <MiniStat label={goal === "ecommerce" ? "Delta" : "CPA"} value={goal === "ecommerce" ? `${campaign.delta > 0 ? "+" : ""}${campaign.delta}%` : fmtMoney(campaign.cpa)} tone={inverse ? "warn" : "good"} />
+        <MiniStat label={t.miniStatSpend} value={fmtMoney(campaign.spend)} />
+        <MiniStat label={goal === "ecommerce" ? t.miniStatRoas : t.miniStatConv} value={goal === "ecommerce" ? `${campaign.roas.toFixed(2)}x` : fmtNum(campaign.conversions)} />
+        <MiniStat label={goal === "ecommerce" ? t.miniStatDelta : t.miniStatCpa} value={goal === "ecommerce" ? `${campaign.delta > 0 ? "+" : ""}${campaign.delta}%` : fmtMoney(campaign.cpa)} tone={inverse ? "warn" : "good"} />
       </div>
     </div>
   );
 }
 
-function DeviceSplitCard({ split }: { split: { label: string; value: number }[] }) {
+function DeviceSplitCard({ split, t }: { split: { label: string; value: number }[]; t: ReportTranslations }) {
   if (!split.length) {
     return (
       <div className="flex min-h-[240px] items-center justify-center rounded-[12px] border border-dashed px-6 text-center text-sm lynck-muted" style={{ borderColor: reportPalette.border, background: reportPalette.surfaceAlt }}>
-        Device segmentation is not stored in the report data yet. Once the Google Ads sync writes device-level metrics, this chart can render the real split here.
+        {t.deviceSplitEmpty}
       </div>
     );
   }
@@ -1244,7 +1255,7 @@ function DeviceSplitCard({ split }: { split: { label: string; value: number }[] 
             </Pie>
             <Tooltip
               contentStyle={{ background: reportPalette.surfaceAlt, border: `1px solid ${reportPalette.border}`, borderRadius: 12, color: reportPalette.text }}
-              formatter={(value: any) => [`${((Number(value) / total) * 100).toFixed(1)}%`, "Share"]}
+              formatter={(value: any) => [`${((Number(value) / total) * 100).toFixed(1)}%`, t.tooltipShare]}
             />
           </PieChart>
         </ResponsiveContainer>
@@ -1292,10 +1303,12 @@ function TopItemsList({
   items,
   emptyLabel,
   nameColumnRatio = 1.55,
+  t,
 }: {
   items: { name: string; clicks: number; conversions: number; avgCpc: number }[];
   emptyLabel: string;
   nameColumnRatio?: number;
+  t: ReportTranslations;
 }) {
   if (!items.length) {
     return <p className="text-sm lynck-muted">{emptyLabel}</p>;
@@ -1304,10 +1317,10 @@ function TopItemsList({
   return (
     <div className="overflow-hidden rounded-[12px] border" style={{ borderColor: reportPalette.border, background: reportPalette.surfaceAlt }}>
       <div className="grid gap-2 border-b px-3 py-2 text-[11px] uppercase tracking-[0.15em] lynck-muted" style={{ borderColor: reportPalette.border, gridTemplateColumns: `minmax(0,${nameColumnRatio}fr) 48px 52px 72px` }}>
-        <span>Item</span>
-        <span className="text-right">Clicks</span>
-        <span className="text-right">Conv.</span>
-        <span className="text-right">Avg. CPC</span>
+        <span>{t.tableItem}</span>
+        <span className="text-right">{t.tableClicks}</span>
+        <span className="text-right">{t.tableConversions}</span>
+        <span className="text-right">{t.tableAvgCpc}</span>
       </div>
       {items.map((item, index) => (
         <div
@@ -1328,7 +1341,7 @@ function TopItemsList({
   );
 }
 
-function LeadInsightPanel({ split, actions }: { split: any[]; actions: any[] }) {
+function LeadInsightPanel({ split, actions, t }: { split: any[]; actions: any[]; t: ReportTranslations }) {
   return (
     <div className="grid gap-4 md:grid-cols-[1fr_1fr]">
       <div className="h-[210px]">
@@ -1339,7 +1352,7 @@ function LeadInsightPanel({ split, actions }: { split: any[]; actions: any[] }) 
             </Pie>
             <Tooltip
             contentStyle={{ background: reportPalette.surfaceAlt, border: `1px solid ${reportPalette.border}`, borderRadius: 12, color: reportPalette.text }}
-            formatter={(value: any) => [fmtNum(Number(value)), "Conversions"]}
+            formatter={(value: any) => [fmtNum(Number(value)), t.tooltipConversions]}
           />
           </PieChart>
         </ResponsiveContainer>
@@ -1356,18 +1369,18 @@ function LeadInsightPanel({ split, actions }: { split: any[]; actions: any[] }) 
   );
 }
 
-function GrowthInsightPanel({ metrics, keywords }: { metrics: MetricsRow; keywords: any[] }) {
+function GrowthInsightPanel({ metrics, keywords, t }: { metrics: MetricsRow; keywords: any[]; t: ReportTranslations }) {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-3 gap-3">
-        <MiniStat label="Impressions" value={fmtNum(metrics.impressions)} />
-        <MiniStat label="Clicks" value={fmtNum(metrics.clicks)} />
-        <MiniStat label="CTR" value={fmtPct(metrics.ctr)} />
+        <MiniStat label={t.growthInsightImpressionsLabel} value={fmtNum(metrics.impressions)} />
+        <MiniStat label={t.metricClicks} value={fmtNum(metrics.clicks)} />
+        <MiniStat label={t.metricCtr} value={fmtPct(metrics.ctr)} />
       </div>
       <div className="rounded-[12px] border p-4" style={{ borderColor: reportPalette.border, background: reportPalette.surfaceAlt }}>
-        <p className="lynck-section-label mb-2">Read on this account</p>
+        <p className="lynck-section-label mb-2">{t.growthReadTitle}</p>
         <p className="text-card-body lynck-muted">
-          Growth accounts should not be forced into a fake deep explanation every month. When the data says seasonality, broader demand, or softer auction pressure, this report should say that clearly and move to the next decision.
+          {t.growthReadBody}
         </p>
       </div>
       <div className="space-y-2 text-sm">
@@ -1391,28 +1404,28 @@ function InsightNote({ label, body }: { label: string; body: string }) {
   );
 }
 
-function getHeroMetrics(reportGoal: ReportGoalFamily, metrics: MetricsRow, split: any[]) {
+function getHeroMetrics(reportGoal: ReportGoalFamily, metrics: MetricsRow, split: any[], t: ReportTranslations) {
   if (reportGoal === "ecommerce") {
     return [
-      { label: "Cost", value: fmtMoney(metrics.cost), now: metrics.cost, prior: metrics.prior?.cost, neutral: true },
-      { label: "Conversions", value: fmtNum(metrics.conversions), now: metrics.conversions, prior: metrics.prior?.conversions },
-      { label: "Conversion value", value: fmtMoney(metrics.conversion_value), now: metrics.conversion_value, prior: metrics.prior?.conversion_value },
-      { label: "ROAS", value: `${metrics.roas.toFixed(2)}x`, now: metrics.roas, prior: metrics.prior?.roas, footnote: "Primary account goal" },
+      { label: t.metricCost, value: fmtMoney(metrics.cost), now: metrics.cost, prior: metrics.prior?.cost, neutral: true },
+      { label: t.metricConversions, value: fmtNum(metrics.conversions), now: metrics.conversions, prior: metrics.prior?.conversions },
+      { label: t.metricConversionValue, value: fmtMoney(metrics.conversion_value), now: metrics.conversion_value, prior: metrics.prior?.conversion_value },
+      { label: t.metricRoas, value: `${metrics.roas.toFixed(2)}x`, now: metrics.roas, prior: metrics.prior?.roas, footnote: t.primaryGoalNote },
     ];
   }
   if (reportGoal === "lead_gen") {
     return [
-      { label: "Cost", value: fmtMoney(metrics.cost), now: metrics.cost, prior: metrics.prior?.cost, neutral: true },
-      { label: "Hard conversions", value: fmtNum(split.find((item) => item.label === "Hard conversions")?.value || metrics.conversions), now: split.find((item) => item.label === "Hard conversions")?.value || metrics.conversions, prior: Math.round((metrics.prior?.conversions || 0) * 0.38) },
-      { label: "Soft conversions", value: fmtNum(split.find((item) => item.label === "Soft conversions")?.value || 0), now: split.find((item) => item.label === "Soft conversions")?.value || 0, prior: Math.round((metrics.prior?.conversions || 0) * 0.62), neutral: true },
-      { label: "CPA", value: fmtMoney(metrics.cpa), now: metrics.cpa, prior: metrics.prior?.cpa, invert: true, footnote: "Read against hard conversions" },
+      { label: t.metricCost, value: fmtMoney(metrics.cost), now: metrics.cost, prior: metrics.prior?.cost, neutral: true },
+      { label: t.metricHardConversions, value: fmtNum(split.find((item) => item.label === "Hard conversions")?.value || metrics.conversions), now: split.find((item) => item.label === "Hard conversions")?.value || metrics.conversions, prior: Math.round((metrics.prior?.conversions || 0) * 0.38) },
+      { label: t.metricSoftConversions, value: fmtNum(split.find((item) => item.label === "Soft conversions")?.value || 0), now: split.find((item) => item.label === "Soft conversions")?.value || 0, prior: Math.round((metrics.prior?.conversions || 0) * 0.62), neutral: true },
+      { label: t.metricCpa, value: fmtMoney(metrics.cpa), now: metrics.cpa, prior: metrics.prior?.cpa, invert: true, footnote: t.cpaNote },
     ];
   }
   return [
-    { label: "Cost", value: fmtMoney(metrics.cost), now: metrics.cost, prior: metrics.prior?.cost, neutral: true },
-    { label: "Clicks", value: fmtNum(metrics.clicks), now: metrics.clicks, prior: metrics.prior?.clicks },
-    { label: "CTR", value: fmtPct(metrics.ctr), now: metrics.ctr, prior: metrics.prior?.ctr },
-    { label: "CPC", value: fmtMoneyPrecise(metrics.cpc), now: metrics.cpc, prior: metrics.prior?.cpc, invert: true, footnote: "Growth lens" },
+    { label: t.metricCost, value: fmtMoney(metrics.cost), now: metrics.cost, prior: metrics.prior?.cost, neutral: true },
+    { label: t.metricClicks, value: fmtNum(metrics.clicks), now: metrics.clicks, prior: metrics.prior?.clicks },
+    { label: t.metricCtr, value: fmtPct(metrics.ctr), now: metrics.ctr, prior: metrics.prior?.ctr },
+    { label: t.metricCpc, value: fmtMoneyPrecise(metrics.cpc), now: metrics.cpc, prior: metrics.prior?.cpc, invert: true, footnote: t.growthNote },
   ];
 }
 
