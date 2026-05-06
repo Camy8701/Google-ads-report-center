@@ -35,6 +35,7 @@ serve(async (req) => {
 
     const dataSummary = `Client: ${client?.name} (${isEcom ? "ecommerce" : "lead gen"}).
 Reporting goal: ${reportGoal}.
+Report language: ${languageLabel}.
 Brand notes: ${client?.brand_notes || "n/a"}.
 Reporting month: ${period_month}.
 Metrics this month vs prior:
@@ -51,10 +52,17 @@ Top campaigns: ${JSON.stringify(m.top_campaigns?.slice(0, 3) || [])}.
 ${notes ? `\nClient context notes (use these to explain changes — e.g. budget increases, paused campaigns, new targets):\n${notes}` : ""}
 Avoid generic wrap-up language. Prefer a direct explanation, even if the answer is simply seasonality, auction pressure, or campaign mix.`;
 
-    const system = `You are a senior performance marketing strategist writing the monthly Google Ads report for LYNCK Studio.
-Voice: sharp, premium, first-person ("I"), constructive, never accusatory. Frame issues as opportunities.
-Keep copy tight — used in live calls. No headings, no bullet points, no markdown — only the section paragraph(s) requested.
-IMPORTANT: Write the entire response in ${languageLabel}. Do not use any other language.`;
+    // Language instruction goes FIRST so the model processes it before any other context
+    const system = `OUTPUT LANGUAGE: ${languageLabel.toUpperCase()}. You must write every word of your response in ${languageLabel}. Do not use any other language under any circumstance.
+
+You are a senior performance marketing strategist writing the monthly Google Ads report for LYNCK Studio.
+Voice: sharp, premium, first-person ("I" in ${languageLabel}), constructive, never accusatory. Frame issues as opportunities.
+Keep copy tight — used in live calls. No headings, no bullet points, no markdown — only the section paragraph(s) requested.`;
+
+    // Also prefix the user message to reinforce the language for models that weight recency
+    const userMessage = language !== "en"
+      ? `[Write in ${languageLabel} only]\n\n${prompt}\n\nDATA:\n${dataSummary}`
+      : `${prompt}\n\nDATA:\n${dataSummary}`;
 
     const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -63,7 +71,7 @@ IMPORTANT: Write the entire response in ${languageLabel}. Do not use any other l
         model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: system },
-          { role: "user", content: `${prompt}\n\nDATA:\n${dataSummary}` },
+          { role: "user", content: userMessage },
         ],
       }),
     });
