@@ -465,6 +465,8 @@ export default function ReportView() {
         });
       };
 
+      const SECTION_GAP_MM = 2; // small gap between sections
+
       for (const block of blocks) {
         const canvas = await html2canvas(block, {
           scale: 2,
@@ -477,7 +479,10 @@ export default function ReportView() {
         const imgData = canvas.toDataURL("image/png");
         const blockHeightMm = (canvas.height * contentWidthMm) / canvas.width;
 
-        if (!isFirstPage && cursorY + blockHeightMm > pageHeightMm - marginMm) {
+        const remainingSpace = pageHeightMm - marginMm - cursorY;
+
+        // If block won't fit on current page and we're not at the top, start new page
+        if (blockHeightMm > remainingSpace && cursorY > marginMm) {
           pdf.addPage();
           paintPageBg();
           cursorY = marginMm;
@@ -485,9 +490,11 @@ export default function ReportView() {
         isFirstPage = false;
 
         if (blockHeightMm <= contentHeightMm) {
+          // Block fits on a single page
           pdf.addImage(imgData, "PNG", marginMm, cursorY, contentWidthMm, blockHeightMm);
-          cursorY += blockHeightMm + 6;
+          cursorY += blockHeightMm + SECTION_GAP_MM;
         } else {
+          // Block is taller than a page — slice it
           const pxPerMm = canvas.width / contentWidthMm;
           const sliceHeightPx = Math.floor(contentHeightMm * pxPerMm);
           let renderedPx = 0;
@@ -510,7 +517,7 @@ export default function ReportView() {
             const sliceData = sliceCanvas.toDataURL("image/png");
             const sliceHeightMm = (thisSlicePx * contentWidthMm) / canvas.width;
             pdf.addImage(sliceData, "PNG", marginMm, cursorY, contentWidthMm, sliceHeightMm);
-            cursorY += sliceHeightMm + 6;
+            cursorY += sliceHeightMm + SECTION_GAP_MM;
             renderedPx += thisSlicePx;
             firstSlice = false;
           }
