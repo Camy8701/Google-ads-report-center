@@ -397,6 +397,12 @@
   body[data-exporting-pdf="true"] .no-print {
     display: none !important;
   }
+
+  /* Remove extra padding on print-page blocks during PDF capture to avoid large gaps */
+  [data-exporting-pdf="true"] .print-page {
+    padding: 8px 0 !important;
+    margin-bottom: 0 !important;
+  }
 }
 
 /* Tiptap / Notes editor */
