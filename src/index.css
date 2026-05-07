@@ -403,6 +403,11 @@
     padding: 8px 0 !important;
     margin-bottom: 0 !important;
   }
+
+  /* Collapse large section margins during PDF export */
+  [data-exporting-pdf="true"] .mb-14 {
+    margin-bottom: 0.5rem !important;
+  }
 }
 
 /* Tiptap / Notes editor */
