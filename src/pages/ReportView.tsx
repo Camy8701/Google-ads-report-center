@@ -450,6 +450,9 @@ export default function ReportView() {
       // Solution: in the clone, disable text-transform and manually uppercase the
       // text nodes ourselves so DOM length == measured length.
       const onclone = (clonedDoc: Document, element: HTMLElement) => {
+        // Fix 1: text-transform:uppercase + ß → html2canvas measures "SS" (2 chars)
+        // but the DOM text node has "ß" (1 char) → Range.setEnd crash.
+        // Strip text-transform and manually uppercase in the clone.
         const upperEls = element.querySelectorAll<HTMLElement>(
           '.lynck-section-label, .uppercase, [class*="uppercase"]'
         );
@@ -460,6 +463,20 @@ export default function ReportView() {
           while ((node = walker.nextNode())) {
             if (node.textContent) {
               node.textContent = node.textContent.toUpperCase();
+            }
+          }
+        });
+
+        // Fix 2: ß in large display headings renders as garbled characters in html2canvas
+        // because the decorative font doesn't have a ß glyph. Replace ß → ss in the clone
+        // (visually equivalent in headings; ss is the Swiss/international spelling anyway).
+        const headingEls = element.querySelectorAll<HTMLElement>("h1, h2, h3, h4");
+        headingEls.forEach((el) => {
+          const walker = clonedDoc.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+          let node: Node | null;
+          while ((node = walker.nextNode())) {
+            if (node.textContent?.includes("ß")) {
+              node.textContent = node.textContent.replace(/ß/g, "ss");
             }
           }
         });
@@ -1021,7 +1038,8 @@ export default function ReportView() {
           </div>
         </section>
 
-        <section className="mb-14 print-page">
+        {/* print-page A: narrative text + driver cards + search terms */}
+        <section className="print-page">
           <Section
             kind="what_changed"
             section={whatChanged}
@@ -1053,35 +1071,32 @@ export default function ReportView() {
               />
             </ChartCard>
           </div>
+        </section>
 
+        {/* print-page B: product/lead/growth table + opportunities — kept separate so it never gets sliced across a page boundary */}
+        <section className="mb-14 print-page mt-4">
           {goalFamily === "ecommerce" ? (
-            <div className="mt-4">
-              <ChartCard label={t.productInsight} title={t.topProducts}>
-                <TopItemsList
-                  items={topProducts.slice(0, 10).map((product) => ({
-                    name: product.name,
-                    clicks: product.clicks,
-                    conversions: product.conversions,
-                    avgCpc: product.avgCpc ?? (product.clicks > 0 ? product.cost / product.clicks : 0),
-                  }))}
-                  emptyLabel={t.noProductData}
-                  nameColumnRatio={4.1}
-                  t={t}
-                />
-              </ChartCard>
-            </div>
+            <ChartCard label={t.productInsight} title={t.topProducts}>
+              <TopItemsList
+                items={topProducts.slice(0, 10).map((product) => ({
+                  name: product.name,
+                  clicks: product.clicks,
+                  conversions: product.conversions,
+                  avgCpc: product.avgCpc ?? (product.clicks > 0 ? product.cost / product.clicks : 0),
+                }))}
+                emptyLabel={t.noProductData}
+                nameColumnRatio={4.1}
+                t={t}
+              />
+            </ChartCard>
           ) : goalFamily === "lead_gen" ? (
-            <div className="mt-4">
-              <ChartCard label={t.leadInsight} title={t.hardVsSoftConversions}>
-                <LeadInsightPanel split={conversionSplit} actions={leadActions} t={t} />
-              </ChartCard>
-            </div>
+            <ChartCard label={t.leadInsight} title={t.hardVsSoftConversions}>
+              <LeadInsightPanel split={conversionSplit} actions={leadActions} t={t} />
+            </ChartCard>
           ) : (
-            <div className="mt-4">
-              <ChartCard label={t.growthInsight} title={t.momentumSignals}>
-                <GrowthInsightPanel metrics={displayMetrics} keywords={topKeywords} t={t} />
-              </ChartCard>
-            </div>
+            <ChartCard label={t.growthInsight} title={t.momentumSignals}>
+              <GrowthInsightPanel metrics={displayMetrics} keywords={topKeywords} t={t} />
+            </ChartCard>
           )}
 
           {opportunitiesBody && (
