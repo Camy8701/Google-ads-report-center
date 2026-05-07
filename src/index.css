@@ -404,6 +404,54 @@
     margin-bottom: 0 !important;
   }
 
+  [data-exporting-pdf="true"].pdf-first-page-group .print-page:first-child {
+    padding-bottom: 4px !important;
+    border-bottom-width: 0 !important;
+  }
+
+  [data-exporting-pdf="true"].pdf-first-page-group .print-page:first-child .lynck-hero-title {
+    font-size: clamp(2.1rem, 6vw, 3.45rem) !important;
+    line-height: 0.98 !important;
+    margin-top: 0.75rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  [data-exporting-pdf="true"].pdf-first-page-group .print-page:first-child > .relative.mb-12 {
+    margin-bottom: 1rem !important;
+  }
+
+  [data-exporting-pdf="true"].pdf-first-page-group .print-page:nth-child(2) h2 {
+    font-size: 1.85rem !important;
+    line-height: 1.05 !important;
+  }
+
+  [data-exporting-pdf="true"].pdf-first-page-group .print-page:nth-child(2) .h-\[250px\] {
+    height: 190px !important;
+  }
+
+  [data-exporting-pdf="true"].pdf-first-page-group .print-page:nth-child(2) .lynck-card,
+  [data-exporting-pdf="true"].pdf-first-page-group .print-page:nth-child(2) .rounded-\[12px\] {
+    padding-top: 0.75rem !important;
+    padding-bottom: 0.75rem !important;
+  }
+
+  [data-exporting-pdf="true"].pdf-first-page-group .print-page:nth-child(2) .mb-8,
+  [data-exporting-pdf="true"].pdf-first-page-group .print-page:nth-child(2) .mb-6 {
+    margin-bottom: 0.75rem !important;
+  }
+
+  [data-exporting-pdf="true"] .print-page h1,
+  [data-exporting-pdf="true"] .print-page h2,
+  [data-exporting-pdf="true"] .print-page h3,
+  [data-exporting-pdf="true"] .lynck-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  [data-exporting-pdf="true"] .print-page {
+    overflow: visible !important;
+  }
+
   /* Collapse large section margins during PDF export */
   [data-exporting-pdf="true"] .mb-14 {
     margin-bottom: 0.5rem !important;

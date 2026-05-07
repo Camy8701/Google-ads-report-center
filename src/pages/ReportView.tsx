@@ -467,8 +467,7 @@ export default function ReportView() {
 
       const SECTION_GAP_MM = 2; // small gap between sections
 
-      for (const block of blocks) {
-        const canvas = await html2canvas(block, {
+      const renderCanvas = (element: HTMLElement) => html2canvas(element, {
           scale: 2,
           useCORS: true,
           backgroundColor: bg,
@@ -476,8 +475,21 @@ export default function ReportView() {
           ignoreElements: ignoreEl,
           onclone,
         });
+
+      const placeCanvas = (canvas: HTMLCanvasElement, scaleToFit = true) => {
         const imgData = canvas.toDataURL("image/png");
-        const blockHeightMm = (canvas.height * contentWidthMm) / canvas.width;
+        let blockWidthMm = contentWidthMm;
+        let blockHeightMm = (canvas.height * blockWidthMm) / canvas.width;
+        let xMm = marginMm;
+
+        // Never slice through cards/tables: scale tall logical blocks down instead.
+        // This prevents headings and table rows from being cut and overlaid at page breaks.
+        if (scaleToFit && blockHeightMm > contentHeightMm) {
+          const fitScale = contentHeightMm / blockHeightMm;
+          blockWidthMm = contentWidthMm * fitScale;
+          blockHeightMm = contentHeightMm;
+          xMm = marginMm + (contentWidthMm - blockWidthMm) / 2;
+        }
 
         const remainingSpace = pageHeightMm - marginMm - cursorY;
 
@@ -489,38 +501,56 @@ export default function ReportView() {
         }
         isFirstPage = false;
 
+        pdf.addImage(imgData, "PNG", xMm, cursorY, blockWidthMm, blockHeightMm);
+        cursorY += blockHeightMm + SECTION_GAP_MM;
+      };
+
+      const createExportGroup = (groupBlocks: HTMLElement[], className: string) => {
+        const group = document.createElement("div");
+        group.className = `report-theme ${className}`;
+        group.setAttribute("data-exporting-pdf", "true");
+        group.style.position = "fixed";
+        group.style.left = "-10000px";
+        group.style.top = "0";
+        group.style.width = `${blocks[0].getBoundingClientRect().width}px`;
+        group.style.background = bg;
+        groupBlocks.forEach((block) => group.appendChild(block.cloneNode(true)));
+        document.body.appendChild(group);
+        return group;
+      };
+
+      if (blocks.length >= 2) {
+        const firstPageGroup = createExportGroup(blocks.slice(0, 2), "pdf-first-page-group");
+        try {
+          placeCanvas(await renderCanvas(firstPageGroup), true);
+        } finally {
+          firstPageGroup.remove();
+        }
+        cursorY = pageHeightMm;
+      }
+
+      for (const block of blocks.slice(blocks.length >= 2 ? 2 : 0)) {
+        const canvas = await renderCanvas(block);
+        const blockHeightMm = (canvas.height * contentWidthMm) / canvas.width;
+
         if (blockHeightMm <= contentHeightMm) {
-          // Block fits on a single page
-          pdf.addImage(imgData, "PNG", marginMm, cursorY, contentWidthMm, blockHeightMm);
-          cursorY += blockHeightMm + SECTION_GAP_MM;
-        } else {
-          // Block is taller than a page — slice it
-          const pxPerMm = canvas.width / contentWidthMm;
-          const sliceHeightPx = Math.floor(contentHeightMm * pxPerMm);
-          let renderedPx = 0;
-          let firstSlice = true;
-          while (renderedPx < canvas.height) {
-            if (!firstSlice) {
-              pdf.addPage();
-              paintPageBg();
-              cursorY = marginMm;
-            }
-            const remainingPx = canvas.height - renderedPx;
-            const thisSlicePx = Math.min(sliceHeightPx, remainingPx);
-            const sliceCanvas = document.createElement("canvas");
-            sliceCanvas.width = canvas.width;
-            sliceCanvas.height = thisSlicePx;
-            const ctx = sliceCanvas.getContext("2d")!;
-            ctx.fillStyle = bg;
-            ctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
-            ctx.drawImage(canvas, 0, -renderedPx);
-            const sliceData = sliceCanvas.toDataURL("image/png");
-            const sliceHeightMm = (thisSlicePx * contentWidthMm) / canvas.width;
-            pdf.addImage(sliceData, "PNG", marginMm, cursorY, contentWidthMm, sliceHeightMm);
-            cursorY += sliceHeightMm + SECTION_GAP_MM;
-            renderedPx += thisSlicePx;
-            firstSlice = false;
-          }
+          placeCanvas(canvas);
+          continue;
+        }
+
+        const segments = Array.from(block.children).filter((child): child is HTMLElement => {
+          if (!(child instanceof HTMLElement) || ignoreEl(child)) return false;
+          const rect = child.getBoundingClientRect();
+          return rect.width > 0 && rect.height > 0;
+        });
+
+        if (segments.length <= 1) {
+          placeCanvas(canvas);
+          continue;
+        }
+
+        for (const segment of segments) {
+          placeCanvas(await renderCanvas(segment));
         }
       }
 
