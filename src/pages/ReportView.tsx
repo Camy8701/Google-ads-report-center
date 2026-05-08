@@ -1430,7 +1430,23 @@ function CampaignPerformanceChart({ campaigns, goal, t }: { campaigns: any[]; go
   }));
 
   return (
-    <div className="h-[390px]">
+    <div className="h-[390px] flex flex-col">
+      <div className="mb-2 flex flex-wrap items-center gap-x-5 gap-y-1 text-xs" style={{ color: reportPalette.muted }}>
+        <span className="inline-flex items-center gap-2">
+          <span className="inline-block h-2.5 w-3 rounded-sm" style={{ background: reportPalette.accent }} />
+          <span>{t.spend}</span>
+          <span className="opacity-70">←</span>
+        </span>
+        <span className="inline-flex items-center gap-2">
+          <span className="opacity-70">→</span>
+          <span className="inline-flex items-center">
+            <span className="inline-block h-0.5 w-4" style={{ background: reportPalette.dataStone }} />
+            <span className="-ml-1 inline-block h-1.5 w-1.5 rounded-full" style={{ background: reportPalette.dataStone }} />
+          </span>
+          <span>{metricLabel}</span>
+        </span>
+      </div>
+      <div className="flex-1 min-h-0">
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart data={data} margin={{ left: 0, right: 10, top: 18, bottom: 70 }}>
           <CartesianGrid stroke={reportPalette.grid} strokeDasharray="3 3" vertical={false} />
@@ -1471,6 +1487,7 @@ function CampaignPerformanceChart({ campaigns, goal, t }: { campaigns: any[]; go
           />
         </ComposedChart>
       </ResponsiveContainer>
+      </div>
     </div>
   );
 }
