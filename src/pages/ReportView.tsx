@@ -1487,6 +1487,7 @@ function CampaignPerformanceChart({ campaigns, goal, t }: { campaigns: any[]; go
           />
         </ComposedChart>
       </ResponsiveContainer>
+      </div>
     </div>
   );
 }
