@@ -1473,6 +1473,10 @@ function CampaignPerformanceChart({ campaigns, goal, t }: { campaigns: any[]; go
         </ComposedChart>
       </ResponsiveContainer>
       </div>
+      <div className="mt-1 flex items-center justify-between text-[11px] uppercase tracking-wider" style={{ color: reportPalette.muted }}>
+        <span className="pl-1">{t.spend}</span>
+        <span className="pr-1">{metricLabel}</span>
+      </div>
     </div>
   );
 }
